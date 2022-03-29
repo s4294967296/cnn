@@ -1,0 +1,50 @@
+---------
+03.03.22:
+---------
+. cnn_exceptions.py:
+    -> Added ParameterError Exception
+. cnn_util_eval.py:
+    -> Added Eval.__create_bins_from_data()
+    -> Added Eval.__save_fig()
+    -> Changed Eval.plot_confusion_matrix():
+        -> Added colour map selection
+        -> Moved saving to Eval.__save_fig()
+    -> Changed Eval.plot_histogram():
+        -> Moved saving to Eval.__save_fig()
+        -> Moved bin creation to Eval.__create_bins_from_data()
+        -> Changed title creation
+    -> Changed Eval.plot_accuracy():
+        -> Moved bin creation to Eval.__create_bins_from_data()
+    -> Added plenty of documentation.
+---------
+04.03.22:
+---------
+. cnn_util_eval.py:
+    -> Modified Eval.plot_accuracy():
+        -> Added error bars
+        -> Added parameter 'error_bars: bool = False'
+        -> added parameter 'plot_at_center_of_bins: bool = True'
+            -> If true, centers the data on centers of bins. In the process, the last data point
+               is dropped.
+    -> Modified bin creation behaviour:
+        -> Providing an int to the parameter bins now properly creates the correct number of bins
+---------
+05.03.22:
+---------
+. cnn_util_eval.py:
+    -> Modified Eval.plot_accuracy():
+        -> Added functionality: It's now possible to provide a list of categories, which will be plotted simultaneously
+        -> Modified plot axis labels
+        -> Added xlbl, ylbl support (editing axis labels)
+        -> Added legend
+    -> Modified Eval.plot_histogram():
+        -> Added legend
+        -> Added xlim, ylim support
+        -> Added xlbl, ylbl support (editing axis labels)
+    -> Added Eval.select_predicted_classes()
+    -> Added Eval.select_predicted_category_values()
+---------
+06.03.22:
+---------
+. Project-wide:
+    -> Changed name to "CELFA - CNN Evaluation Library For ANNIE"

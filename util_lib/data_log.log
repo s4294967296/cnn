@@ -1,0 +1,2 @@
+2022-02-12 19:52:24,951 - __main__ - Call to find_number_files (../util_lib/bac,_###_abc.csv): files found in directory: 5
+2022-02-12 19:52:24,966 - __main__ - Call to find_number_files (../util_lib/bac,_###_abc.csv): valid files found in directory: 0
