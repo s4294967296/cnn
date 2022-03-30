@@ -176,7 +176,10 @@ class Evaluator:
             self.__test_data_original, self.test_category_values = celfa_data.split_data_cat(self.__test_data_original)
             self.test_category_values = np.array(self.test_category_values)
 
+        if stats_data_indices is None:
+            self.stats_dict = None
         self.stats_data = None
+
         self.unique_categories = None
         self.counts_per_category = None
         self.score = None
