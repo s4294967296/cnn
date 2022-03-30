@@ -675,7 +675,7 @@ class Evaluator:
 
     def plot_confusion_matrix(self,
                               normalized: bool = True,
-                              title: str = "Confusion matrix",
+                              title: str = None,
                               cmap: str = "inferno",
                               savefig: bool = False,
                               filename: bool = None,
@@ -705,7 +705,11 @@ class Evaluator:
 
         cmap = plt.get_cmap(cmap)
         plt.imshow(local_cm, interpolation='nearest', cmap=cmap)
+
+        if title is None:
+            title = f"CM - {self.model_name}"
         plt.title(title)
+
         plt.colorbar()
         tick_marks = np.arange(len(classes))
         plt.xticks(tick_marks, classes, rotation=45)
@@ -1122,7 +1126,7 @@ class Evaluator:
 
 
 class Bundle:
-    def __init(self, evals: List[Evaluator]):
+    def __init__(self, evals: List[Evaluator]):
         self.evals = evals
 
     def plot_percent_predicted(self, *args, **kwargs):
