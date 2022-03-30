@@ -73,10 +73,9 @@ def find_number_files(path: str, label: str, name: str, ending: str = "csv", gue
                      f"{counter}")
 
     for i in range(counter):
+        p = pathlib.Path(f"{path}{label}_{i}_{name}.{ending}")
         if beam_mrd_coinc:
-            p = pathlib.Path(f"R{i}_{label}_{name}.{ending}")
-        else:
-            p = pathlib.Path(f"{path}{label}_{i}_{name}.{ending}")
+            p = pathlib.Path(f"{path}R{i}_{label}_{name}.{ending}")
         if not p.is_file():
             counter -= 1
             data_logger.debug(f"Call to find_number_files - {path}{label}_{i}_{name}.{ending}: file not found")
@@ -203,14 +202,19 @@ def load_data(path: str,
     arr = []
     if number_of_files == -1:
         number_of_files = find_number_files(path, label, name, ending)
-    elif file_index_edges is not None:
+    else:
+        number_of_files = number_of_files
+    if file_index_edges is not None:
         number_of_files = file_index_edges[1]
+        i = file_index_edges[0]
+    else:
+        i = 0
 
-    i = 0 if file_index_edges is None else file_index_edges[0]
     break_condition = 1 if file_index_edges is None else file_index_edges[0]
 
     while number_of_files > break_condition:
         i += 1
+        number_of_files -= 1
         try:
             if beam_mrd_coinc:
                 if name in ["EnergyMuon", "EnergyElectron"]:
@@ -249,7 +253,7 @@ def load_data(path: str,
         except OSError:
             data_logger.debug(f"Call to load_data_to_arr ({path}{label}_{i}_{name}.{ending}): file not found")
             continue
-        number_of_files -= 1
+
     data_logger.info(f"Call to load_data_to_arr ({path}{label}_###_{name}.{ending}): successfully loaded "
                      f"the specified files.")
     return arr
