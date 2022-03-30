@@ -178,6 +178,8 @@ class Evaluator:
 
         if stats_data_indices is None:
             self.stats_dict = None
+        else:
+            self.stats_dict = {}
         self.stats_data = None
 
         self.unique_categories = None
@@ -191,7 +193,6 @@ class Evaluator:
         self.y_classes = None
         self.cm = None
         self.cm_normalized = False
-        self.stats_dict = {}
         self.__predicted_category_values = []
         self.__reshape_data = reshape_data
 
