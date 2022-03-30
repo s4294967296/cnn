@@ -875,6 +875,13 @@ class Evaluator:
             matplotlib.pyplot.hist().
         :return: None. Shows plot.
         """
+        if type(category) is str:
+            if self.stats_data[category] is None:
+                return
+        if type(category) is list:
+            for entry in category:
+                if self.stats_data[entry] is None:
+                    return
         if self.real_test_data:
             self.__plot_histogram_real(data_name, bins, xlim, ylim, xlbl, ylbl, title, histtype, equal_counts,
                                        savefig, filename, file_format, **kwargs)
