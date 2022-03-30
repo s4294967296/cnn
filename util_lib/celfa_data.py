@@ -241,11 +241,10 @@ def load_data(path: str,
                     raise celfa_exceptions.ErrorMismatch
                     pass
 
-            number_of_files -= 1
         except OSError:
             data_logger.debug(f"Call to load_data_to_arr ({path}{label}_{i}_{name}.{ending}): file not found")
             continue
-
+        number_of_files -= 1
     data_logger.info(f"Call to load_data_to_arr ({path}{label}_###_{name}.{ending}): successfully loaded "
                      f"the specified files.")
     return arr
