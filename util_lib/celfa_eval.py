@@ -1188,5 +1188,9 @@ class Bundle:
         Data points beyond - if provided - xlim are automatically dropped; if no xlim has been provided, discounts all
         data points beyond the first and last bin border.
         """
-        for evaluator in self.evals:
-            evaluator.plot_accuracy(*args, **kwargs)
+        for i in range(len(self.evals)):
+            if i not in self.real_data_indices:
+                (self.evals[i]).plot_accuracy(*args, **kwargs)
+            else:
+                pass
+
