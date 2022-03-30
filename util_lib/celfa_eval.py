@@ -517,6 +517,7 @@ class Evaluator:
 
         plt.xlabel("Residual fraction background", fontsize=14) if xlbl is None else plt.xlabel(xlbl)
         plt.ylabel("PSignal efficiency", fontsize=14) if ylbl is None else plt.ylabel(ylbl)
+        plt.title(f"{self.model_name}")
 
         if xlim is not None:
             plt.xlim(xlim)
@@ -568,7 +569,11 @@ class Evaluator:
         # plt.legend(loc='best', fontsize=11)
 
         plt.xlabel(data_name) if xlbl is None else plt.xlabel(xlbl)
-        plt.ylabel("Predicted % Muon events per bin") if ylbl is None else plt.ylabel(ylbl)
+        if self.mode == "em":
+            plt.ylabel("Predicted % Muon events per bin") if ylbl is None else plt.ylabel(ylbl)
+        else:
+            plt.ylabel("Predicted % SR events per bin") if ylbl is None else plt.ylabel(ylbl)
+        plt.title(f"{self.model_name}")
 
         if xlim is not None:
             plt.xlim(xlim)
@@ -665,6 +670,8 @@ class Evaluator:
 
         plt.xlabel(f"Predicted probability of being of the class {category}") if xlbl is None else plt.xlabel(xlbl)
         plt.ylabel("Count") if ylbl is None else plt.ylabel(ylbl)
+
+        plt.title(f"{self.model_name}")
 
         if xlim is not None:
             plt.xlim(xlim)
@@ -782,7 +789,7 @@ class Evaluator:
         _ = plt.hist(data, bins=bins, histtype=histtype, label="All data", **kwargs)
 
         if title is None:
-            plt.title(f"Histogram with {len(bins) - 1} bins. "
+            plt.title(f"{self.model_name} - Histogram with {len(bins) - 1} bins. "
                       f"\n Plotting {data_name} for all categories.")
         else:
             plt.title(f"{title}")
@@ -866,7 +873,7 @@ class Evaluator:
                     _ = plt.hist(data, bins=bins_t, histtype=histtype, label=category[cat], **kwargs)
 
             if title is None:
-                plt.title(f"Histogram with {len(bins_t) - 1} bins. "
+                plt.title(f"{self.model_name} - Histogram with {len(bins_t) - 1} bins. "
                           f"\n Plotting {data_name} for the categories {category}.")
             else:
                 plt.title(f"{title}")
@@ -881,7 +888,7 @@ class Evaluator:
             _ = plt.hist(data, bins=bins, histtype=histtype, label=category, **kwargs)
 
             if title is None:
-                plt.title(f"Histogram with {len(bins) - 1} bins. "
+                plt.title(f"{self.model_name} - Histogram with {len(bins) - 1} bins. "
                           f"\n Plotting {data_name} for the category {category}.")
             else:
                 plt.title(f"{title}")
@@ -1108,7 +1115,7 @@ class Evaluator:
             bins = bins_centered
 
         if title is None:
-            title = f"Accuracy plot of CNN prediction for {category} {data_name}"
+            title = f"{self.model_name} - Accuracy plot of CNN prediction for {category} {data_name}"
         plt.title(title)
 
         plt.legend(loc='best', fontsize=11)
