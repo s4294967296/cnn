@@ -201,7 +201,7 @@ def load_data(path: str,
     elif file_index_edges is not None:
         number_of_files = file_index_edges[1]
 
-    i = 0
+    i = 0 if file_index_edges is None else file_index_edges[0]
     break_condition = 1 if file_index_edges is None else file_index_edges[0]
 
     while number_of_files > break_condition:
