@@ -384,7 +384,7 @@ def zip_data(data_sets: list) -> list:
 
 
 def construct_data_array(data_names, path: str, label: str, number_of_files: int = -1,
-                         ending: str = "csv", load_from_config=False) -> np.array:
+                         ending: str = "csv", load_from_config=False, beam_mrd_coinc: bool = False) -> np.array:
     """
     Return zipped data sets in the order specified by data_names. Use "time" to load time, using the special
     load_time_data function. The order in which the data sets will be zipped is the order of the entries in data_names.
@@ -392,6 +392,7 @@ def construct_data_array(data_names, path: str, label: str, number_of_files: int
     The file path is given by ~/path/label_#####_name.ending, where '#####' is the corresponding file number.
 
     Note: Also automatically appends the appropriate data identifier (1, 0) for electron, (0, 1) for muon.
+    :param beam_mrd_coinc: TODO
     :param ending: File ending, e.g. 'csv' (without dot). Default = 'csv'
     :param data_names: List of file names which will be loaded, e.g. 'charge', 'neutron_number', 'time'.
     :param path: Directory path (Include slash at the end)
@@ -409,7 +410,8 @@ def construct_data_array(data_names, path: str, label: str, number_of_files: int
         if name in ["time", "time_abs"]:
             loaded_data.append(load_time_data(path, label, ending=ending))
         else:
-            loaded_data.append(load_data(path, label, name, number_of_files=number_of_files, ending=ending))
+            loaded_data.append(load_data(path, label, name, number_of_files=number_of_files,
+                                         ending=ending, beam_mrd_coinc=beam_mrd_coinc))
 
         # Should be unnecessary since zip_data() ensures that each list is the same length, but gives peace of mind
         length = len(loaded_data[0])
