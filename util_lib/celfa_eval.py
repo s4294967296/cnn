@@ -217,6 +217,8 @@ class Evaluator:
         Initialize 'self.stats_dict' from 'self.stats_data_indices'. This translates the indices from test_data to the
         ordering of stats_data.
         """
+        if self.stats_dict is None:
+            return
         i = 0
         for key in self.data_dict:
             if self.data_dict[key] in self.stats_data_indices:
@@ -245,6 +247,8 @@ class Evaluator:
 
     def __create_stats_data(self) -> None:
         """Initialize stats_data from test_data selected by stats_data_indices."""
+        if self.stats_dict is None:
+            return
         if self.real_test_data:
             s_data = []
 
@@ -278,15 +282,27 @@ class Evaluator:
         # whatever you do, do not change the order of zip's. This WILL break all methods dependent on self.stats_data,
         # since the order is crucial.
         if self.real_test_data:
-            self.stats_data = list(zip(self.stats_data,
-                                       [0 for i in range(len(self.__predicted_category_values))],
-                                       self.y_prob,
-                                       self.__predicted_category_values))
+            if self.stats_dict is None:
+                list(zip([0 for i in range(len(self.__predicted_category_values))],
+                         [0 for i in range(len(self.__predicted_category_values))],
+                         self.y_prob,
+                         self.__predicted_category_values))
+            else:
+                self.stats_data = list(zip(self.stats_data,
+                                           [0 for i in range(len(self.__predicted_category_values))],
+                                           self.y_prob,
+                                           self.__predicted_category_values))
         else:
-            self.stats_data = list(zip(self.stats_data,
-                                       self.test_category_values,
-                                       self.y_prob,
-                                       self.__predicted_category_values))
+            if self.stats_dict is None:
+                self.stats_data = list(zip([0 for i in range(len(self.__predicted_category_values))],
+                                           self.test_category_values,
+                                           self.y_prob,
+                                           self.__predicted_category_values))
+            else:
+                self.stats_data = list(zip(self.stats_data,
+                                           self.test_category_values,
+                                           self.y_prob,
+                                           self.__predicted_category_values))
 
     def __calculate_y_prob(self) -> None:
         """Calculate the classification probability for each test_data entry."""
@@ -1193,4 +1209,3 @@ class Bundle:
                 (self.evals[i]).plot_accuracy(*args, **kwargs)
             else:
                 pass
-
