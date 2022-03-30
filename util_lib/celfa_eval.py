@@ -1156,8 +1156,11 @@ class Bundle:
     def plot_probability_histogram(self, *args, **kwargs):
         # TODO: documentation
         """Plots y_prob % 'confidence' for an event."""
-        for evaluator in self.evals:
-            evaluator.plot_probability_histogram(*args, **kwargs)
+        for i in range(len(self.evals)):
+            if i in self.real_data_indices:
+                (self.evals[i]).plot_probability_histogram(*args, **kwargs)
+            else:
+                pass
 
     def plot_confusion_matrix(self, *args, **kwargs):
         for i in range(len(self.evals)):
