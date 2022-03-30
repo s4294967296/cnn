@@ -1126,8 +1126,10 @@ class Evaluator:
 
 
 class Bundle:
-    def __init__(self, evals: List[Evaluator]):
+    def __init__(self, evals: List[Evaluator],
+                 real_data_indices=None):
         self.evals = evals
+        self.real_data_indices = real_data_indices
 
     def plot_percent_predicted(self, *args, **kwargs):
         # TODO: DOCSTRING
@@ -1138,8 +1140,11 @@ class Bundle:
 
     def plot_prediction_accuracy(self, *args, **kwargs):
         # TODO: documentation
-        for evaluator in self.evals:
-            evaluator.plot_prediction_accuracy(*args, **kwargs)
+        for i in range(len(self.evals)):
+            if i not in self.real_data_indices:
+                (self.evals[i]).plot_prediction_accuracy(*args, **kwargs)
+            else:
+                pass
 
     def plot_probability_histogram(self, *args, **kwargs):
         # TODO: documentation
@@ -1148,8 +1153,11 @@ class Bundle:
             evaluator.plot_probability_histogram(*args, **kwargs)
 
     def plot_confusion_matrix(self, *args, **kwargs):
-        for evaluator in self.evals:
-            evaluator.plot_confusion_matrix(*args, **kwargs)
+        for i in range(len(self.evals)):
+            if i not in self.real_data_indices:
+                (self.evals[i]).plot_confusion_matrix(*args, **kwargs)
+            else:
+                pass
 
     def plot_histogram(self, *args, **kwargs) -> None:
         """
@@ -1172,4 +1180,3 @@ class Bundle:
         """
         for evaluator in self.evals:
             evaluator.plot_accuracy(*args, **kwargs)
-
