@@ -43,7 +43,8 @@ data_logger.setLevel(logging.INFO)
 ########################################################################################################################
 
 
-def find_number_files(path: str, label: str, name: str, ending: str = "csv", guess: int = -1) -> int:
+def find_number_files(path: str, label: str, name: str, ending: str = "csv", guess: int = -1,
+                      beam_mrd_coinc: bool = False) -> int:
     """
     This function returns the amount of files fount, specified by the following parameters in the form
     ~/path/label_#####_name.ending, where '#####' is the corresponding file number. The function will start attempting
@@ -52,6 +53,7 @@ def find_number_files(path: str, label: str, name: str, ending: str = "csv", gue
     Warning: This will only find all files, as long as the highest file index is smaller than the number of all files
     in the directory.
 
+    :param beam_mrd_coinc: TODO see load_data
     :param path: Directory path (Include forward slash at the end)
     :param label: Label of the data, e.g. 'electron_beamlike'
     :param name: What data is read in, e.g. 'charge', 'neutron number'
@@ -71,7 +73,10 @@ def find_number_files(path: str, label: str, name: str, ending: str = "csv", gue
                      f"{counter}")
 
     for i in range(counter):
-        p = pathlib.Path(f"{path}{label}_{i}_{name}.{ending}")
+        if beam_mrd_coinc:
+            p = pathlib.Path(f"R{i}_{label}_{name}.{ending}")
+        else:
+            p = pathlib.Path(f"{path}{label}_{i}_{name}.{ending}")
         if not p.is_file():
             counter -= 1
             data_logger.debug(f"Call to find_number_files - {path}{label}_{i}_{name}.{ending}: file not found")
