@@ -64,7 +64,8 @@ class Evaluator:
                  data_dict: dict = None,
                  mute_tf_info: bool = True,
                  real_test_data: bool = False,
-                 reshape_data: bool = False) -> None:
+                 reshape_data: bool = False,
+                 mode: str = "em") -> None:
         """
         Used for high-level evaluation and presentation of data, meant as an easy way to evaluate model performance.
         Requires at least model_path. The model will be loaded into self.model as a keras.model. To access plotting
@@ -117,6 +118,7 @@ class Evaluator:
 
         :rtype: None
         :return: None
+        :param mode: Specifies the mode of operation. 'em' -> e/mu classification; 'rc' -> ring counting/classification
         :param mute_tf_info: If set to true, disable printing of tf info.
         :param model_name: Name of the model
         :param test_data: Data with which the model shall be evaluated. The Evaluator expects a tuple of the shape
@@ -160,6 +162,7 @@ class Evaluator:
         self.category_values_dict = cat_values_dict
         self.net_data_indices = net_data_indices
         self.stats_data_indices = stats_data_indices
+        self.mode = mode
 
         # Instantiated for other methods.
         #
@@ -257,11 +260,18 @@ class Evaluator:
     def __create_predicted_category_values(self) -> None:
         """Create predicted category values based on network prediction of test data. This needs to be adapted for
         different network outputs."""
-        for i in range(len(self.y_prob)):
-            if self.y_prob[i][0] >= 0.5:
-                self.__predicted_category_values.append(self.category_values_dict["Electron"])
-            else:
-                self.__predicted_category_values.append(self.category_values_dict["Muon"])
+        if self.mode == "em":
+            for i in range(len(self.y_prob)):
+                if self.y_prob[i][0] >= 0.5:
+                    self.__predicted_category_values.append(self.category_values_dict["Electron"])
+                else:
+                    self.__predicted_category_values.append(self.category_values_dict["Muon"])
+        elif self.mode == "rc":
+            for i in range(len(self.y_prob)):
+                if self.y_prob[i][0] >= 0.5:
+                    self.__predicted_category_values.append(self.category_values_dict["MR"])
+                else:
+                    self.__predicted_category_values.append(self.category_values_dict["SR"])
 
     def __join_predicted_and_category_values_and_stats_data(self) -> None:
         """Take predicted category values, and zip it to only the data."""
@@ -586,14 +596,14 @@ class Evaluator:
                     # [1 0] and [1, 0]. (calling np.array() will change the second list into the first object)
                     if (np.array(selected_data[event][1]) == np.array(
                             selected_category_value_predictions[event])).all():
-                        if category == "Electron":
+                        if category == "Electron" or category == "MR":
                             correctly_classified_probabilities.append(selected_class_predictions[event][0])
-                        elif category == "Muon":
+                        elif category == "Muon" or category == "SR":
                             correctly_classified_probabilities.append(selected_class_predictions[event][1])
                     else:
-                        if category == "Electron":
+                        if category == "Electron" or category == "MR":
                             incorrectly_classified_probabilities.append(selected_class_predictions[event][0])
-                        elif category == "Muon":
+                        elif category == "Muon" or category == "SR":
                             incorrectly_classified_probabilities.append(selected_class_predictions[event][1])
                 elif style == "continuous":
                     pass
@@ -682,7 +692,12 @@ class Evaluator:
         :param filename: Filename of the saved figure.
         """
         # TODO: Use  self.category_values_dict
-        classes = ["Electron", "Muon"]
+        if self.mode == "em":
+            classes = ["Electron", "Muon"]
+        elif self.mode == "rc":
+            classes = ["MR", "SR"]
+        else:
+            raise celfa_exceptions.ErrorParameter
 
         local_cm = self.cm_normalized if normalized else self.cm
 
