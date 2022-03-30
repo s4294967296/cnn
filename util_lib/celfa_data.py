@@ -177,7 +177,8 @@ def load_data(path: str,
               name: str,
               number_of_files: int = -1,
               ending: str = "csv",
-              beam_mrd_coinc: bool = False
+              beam_mrd_coinc: bool = False,
+              file_index_edges: List[int] = None
               ) -> np.array:
     """
     Similar to concat_data_to_arr, the difference being that an array will be constructed.
@@ -185,6 +186,7 @@ def load_data(path: str,
     following pattern:
     ~/path/label_#####_name.ending, where '#####' is the corresponding file number.
 
+    :param file_index_edges: Pass list or tuple of 2 ints to specify max and min file index for loading.
     :param beam_mrd_coinc: TODO
     :param number_of_files: How many data files will be loaded; set to -1 if all files should be loaded. Default = -1
     :param path: Directory path (Include forward slash at the end)
@@ -196,9 +198,13 @@ def load_data(path: str,
     arr = []
     if number_of_files == -1:
         number_of_files = find_number_files(path, label, name, ending)
+    elif file_index_edges is not None:
+        number_of_files = file_index_edges[1]
 
     i = 0
-    while number_of_files > 1:
+    break_condition = 1 if file_index_edges is None else file_index_edges[0]
+
+    while number_of_files > break_condition:
         i += 1
         try:
             if beam_mrd_coinc:
@@ -247,6 +253,7 @@ def load_data(path: str,
 
 def load_time_data(path: str, label: str, number_of_files: int = -1, ending="csv") -> np.array:
     """
+    TODO: add file index edges (see load_data)
     Similar to concat_time_data, the difference being that an array will be constructed.
     Special util function to load in time data files, specified by the pattern
     ~/path/label_#####_name.ending, where '#####' is the corresponding file number. The optional parameter
@@ -254,7 +261,7 @@ def load_time_data(path: str, label: str, number_of_files: int = -1, ending="csv
     Invert order of high time values <-> low time values, by inverting the interval [0,1] to [1,0] (range of data).
     Also check for sum of elements of charge data of an event to be 0, if so, append empty arr.
 
-    Will take in an array, to which the loaded time data will be appended. Compare "concat_data_to_arr".
+    Take in an array, to which the loaded time data will be appended. Compare "concat_data_to_arr".
 
     :param ending: File ending. Default = "csv"
     :param path: Directory path (Include forward slash at the end)
@@ -384,7 +391,8 @@ def zip_data(data_sets: list) -> list:
 
 
 def construct_data_array(data_names, path: str, label: str, number_of_files: int = -1,
-                         ending: str = "csv", load_from_config=False, beam_mrd_coinc: bool = False) -> np.array:
+                         ending: str = "csv", load_from_config=False,
+                         file_index_edges: List[int] = None, beam_mrd_coinc: bool = False) -> np.array:
     """
     Return zipped data sets in the order specified by data_names. Use "time" to load time, using the special
     load_time_data function. The order in which the data sets will be zipped is the order of the entries in data_names.
@@ -392,6 +400,7 @@ def construct_data_array(data_names, path: str, label: str, number_of_files: int
     The file path is given by ~/path/label_#####_name.ending, where '#####' is the corresponding file number.
 
     Note: Also automatically appends the appropriate data identifier (1, 0) for electron, (0, 1) for muon.
+    :param file_index_edges: Pass list or tuple of 2 ints to specify max and min file index for loading.
     :param beam_mrd_coinc: TODO
     :param ending: File ending, e.g. 'csv' (without dot). Default = 'csv'
     :param data_names: List of file names which will be loaded, e.g. 'charge', 'neutron_number', 'time'.
@@ -411,7 +420,7 @@ def construct_data_array(data_names, path: str, label: str, number_of_files: int
             loaded_data.append(load_time_data(path, label, ending=ending))
         else:
             loaded_data.append(load_data(path, label, name, number_of_files=number_of_files,
-                                         ending=ending, beam_mrd_coinc=beam_mrd_coinc))
+                                         ending=ending, beam_mrd_coinc=beam_mrd_coinc, file_index_edges=file_index_edges))
 
         # Should be unnecessary since zip_data() ensures that each list is the same length, but gives peace of mind
         length = len(loaded_data[0])
