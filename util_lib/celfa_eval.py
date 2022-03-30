@@ -3,7 +3,7 @@ import os
 import logging
 import configparser
 import itertools
-from typing import Union
+from typing import Union, List
 
 # 3rd party
 import numpy as np
@@ -12,6 +12,7 @@ from tensorflow import keras
 import matplotlib.patches
 import matplotlib.pyplot as plt
 import sklearn.metrics
+from sklearn.metrics import roc_auc_score, roc_curve, auc
 import statsmodels.stats.proportion as sm
 
 # Home-made :)
@@ -62,7 +63,8 @@ class Evaluator:
                  cat_values_dict: dict = None,
                  data_dict: dict = None,
                  mute_tf_info: bool = True,
-                 real_test_data: bool = False) -> None:
+                 real_test_data: bool = False,
+                 reshape_data: bool = False) -> None:
         """
         Used for high-level evaluation and presentation of data, meant as an easy way to evaluate model performance.
         Requires at least model_path. The model will be loaded into self.model as a keras.model. To access plotting
@@ -140,6 +142,7 @@ class Evaluator:
             human-readable identifiers such as "Electron". Default = None.
         :param model_path: full path.
         :param real_test_data: Set to true if the network is used on new, real data, without category values.
+        :param reshape_data: Specify if data is to be reshaped.
         """
 
         if mute_tf_info:
@@ -184,6 +187,7 @@ class Evaluator:
         self.cm_normalized = False
         self.stats_dict = {}
         self.__predicted_category_values = []
+        self.__reshape_data = reshape_data
 
         # Model stuff
         if model is None:
@@ -226,11 +230,15 @@ class Evaluator:
                 for index in self.net_data_indices:
                     temp.append(self.__test_data_original[i][index])
                 s_data.append(temp)
-            self.test_data = (np.array(s_data)).reshape((-1, 10, 16, len(self.net_data_indices)))
+            if self.__reshape_data:
+                self.test_data = (np.array(s_data)).reshape((-1, 10, 16, len(self.net_data_indices)))
+            else:
+                self.test_data = np.array(s_data)
 
         else:
-            self.test_data = (np.array(celfa_data.select_data(
-                self.__test_data_original, self.net_data_indices))).reshape((-1, 10, 16, len(self.net_data_indices)))
+            self.test_data = np.array(celfa_data.select_data(self.__test_data_original, self.net_data_indices))
+            if self.__reshape_data:
+                self.test_data = self.test_data.reshape((-1, 10, 16, len(self.net_data_indices)))
 
     def __create_stats_data(self) -> None:
         """Initialize stats_data from test_data selected by stats_data_indices."""
@@ -464,6 +472,50 @@ class Evaluator:
             raise celfa_exceptions.ErrorParameter
 
         return bins
+
+    def get_auc(self):
+        return roc_auc_score(self.test_category_values, self.y_prob)
+
+    def plot_roc(self,
+                 category=None,
+                 xlim: tuple = None,
+                 ylim: tuple = None,
+                 xlbl: str = None,
+                 ylbl: str = None,
+                 savefig: bool = False,
+                 filename: bool = None,
+                 file_format: str = None,
+                 **kwargs
+                 ):
+        # TODO: DOCUMENTATION
+
+        fpr, tpr, threshold, roc_auc = dict(), dict(), dict(), dict()
+        for i in range(len(self.category_values_dict)):
+            fpr[i], tpr[i], threshold[i] = roc_curve(self.test_category_values[:, i], self.y_prob[:, i])
+            roc_auc[i] = auc(fpr[i], tpr[i])
+
+        # Plot of a ROC curve for a specific class
+
+        fig = plt.figure()
+        plt.plot(fpr[np.where(self.category_values_dict[category]
+                              == np.amax(self.category_values_dict[category]))[0][0]],
+                 tpr[np.where(self.category_values_dict[category]
+                              == np.amax(self.category_values_dict[category]))[0][0]],
+                 label=f'ROC curve {self.get_auc()}')
+
+        plt.legend(loc="lower right", fontsize=12)
+
+        plt.xlabel("Residual fraction background", fontsize=14) if xlbl is None else plt.xlabel(xlbl)
+        plt.ylabel("PSignal efficiency", fontsize=14) if ylbl is None else plt.ylabel(ylbl)
+
+        if xlim is not None:
+            plt.xlim(xlim)
+        if ylim is not None:
+            plt.ylim(ylim)
+        plt.show()
+
+        if savefig:
+            self.__save_fig(fig, file_format, filename)
 
     def plot_percent_predicted(self,
                                data_name=None,
@@ -1052,3 +1104,53 @@ class Evaluator:
         plt.xlim(xlim)
         plt.ylim(ylim)
         plt.show()
+
+
+class Bundle:
+    def __init(self, evals: List[Evaluator]):
+        self.evals = evals
+
+    def plot_percent_predicted(self, *args, **kwargs):
+        # TODO: DOCSTRING
+        # TODO: make flexible for electron as well etc.
+        """Plots predicted count / total count per bin vs. data_name"""
+        for evaluator in self.evals:
+            evaluator.plot_percent_predicted(*args, **kwargs)
+
+    def plot_prediction_accuracy(self, *args, **kwargs):
+        # TODO: documentation
+        for evaluator in self.evals:
+            evaluator.plot_prediction_accuracy(*args, **kwargs)
+
+    def plot_probability_histogram(self, *args, **kwargs):
+        # TODO: documentation
+        """Plots y_prob % 'confidence' for an event."""
+        for evaluator in self.evals:
+            evaluator.plot_probability_histogram(*args, **kwargs)
+
+    def plot_confusion_matrix(self, *args, **kwargs):
+        for evaluator in self.evals:
+            evaluator.plot_confusion_matrix(*args, **kwargs)
+
+    def plot_histogram(self, *args, **kwargs) -> None:
+        """
+        Plot a histogram (number of counts vs data).
+        """
+        for evaluator in self.evals:
+            evaluator.plot_histogram(*args, **kwargs)
+
+    def plot_accuracy(self, *args, **kwargs) -> None:
+        """
+        Plot model accuracy (accuracy vs data).
+
+        ----------------------------------------------------------------------------------------------------------------
+
+        Note:
+        -----
+
+        Data points beyond - if provided - xlim are automatically dropped; if no xlim has been provided, discounts all
+        data points beyond the first and last bin border.
+        """
+        for evaluator in self.evals:
+            evaluator.plot_accuracy(*args, **kwargs)
+

@@ -172,7 +172,12 @@ def concat_data_to_arr(arr: np.array, path: str, label: str, name: str, number_o
     return arr
 
 
-def load_data(path: str, label: str, name: str, number_of_files: int = -1, ending: str = "csv"
+def load_data(path: str,
+              label: str,
+              name: str,
+              number_of_files: int = -1,
+              ending: str = "csv",
+              beam_mrd_coinc: bool = False
               ) -> np.array:
     """
     Similar to concat_data_to_arr, the difference being that an array will be constructed.
@@ -180,6 +185,7 @@ def load_data(path: str, label: str, name: str, number_of_files: int = -1, endin
     following pattern:
     ~/path/label_#####_name.ending, where '#####' is the corresponding file number.
 
+    :param beam_mrd_coinc: TODO
     :param number_of_files: How many data files will be loaded; set to -1 if all files should be loaded. Default = -1
     :param path: Directory path (Include forward slash at the end)
     :param label: Label of the data, e.g. 'electron_beamlike'
@@ -195,21 +201,39 @@ def load_data(path: str, label: str, name: str, number_of_files: int = -1, endin
     while number_of_files > 1:
         i += 1
         try:
-            if name in ["EnergyMuon", "EnergyElectron"]:
-                data = load_column(path, f"{label}_{i}_{name}.{ending}", 2)
-            elif name in ["VisibleEnergy", "Rings"]:
-                data = load_column(path, f"{label}_{i}_{name}.{ending}", 0)
-            elif name in ["MRD"]:
-                data = np.loadtxt(f"{path}{label}_{i}_{name}.{ending}", delimiter=",")
+            if beam_mrd_coinc:
+                if name in ["EnergyMuon", "EnergyElectron"]:
+                    data = load_column(path, f"R{i}_{label}_{name}.{ending}", 2)
+                elif name in ["VisibleEnergy", "Rings"]:
+                    data = load_column(path, f"R{i}_{label}_{name}.{ending}", 0)
+                elif name in ["MRD"]:
+                    data = np.loadtxt(f"{path}R{i}_{label}_{name}.{ending}", delimiter=",")
+                else:
+                    data = np.loadtxt(f"{path}R{i}_{label}_{name}.{ending}", delimiter=",")
+                    np.reshape(data, (-1, 160))
+                try:
+                    arr = np.concatenate([arr, data], axis=0) if len(arr) > 0 else data
+                except ValueError:
+                    # Usually due to a .csv file only containing 1 event
+                    raise celfa_exceptions.ErrorMismatch
+                    pass
+
             else:
-                data = np.loadtxt(f"{path}{label}_{i}_{name}.{ending}", delimiter=",")
-                np.reshape(data, (-1, 160))
-            try:
-                arr = np.concatenate([arr, data], axis=0) if len(arr) > 0 else data
-            except ValueError:
-                # Usually due to a .csv file only containing 1 event
-                raise celfa_exceptions.ErrorMismatch
-                pass
+                if name in ["EnergyMuon", "EnergyElectron"]:
+                    data = load_column(path, f"{label}_{i}_{name}.{ending}", 2)
+                elif name in ["VisibleEnergy", "Rings"]:
+                    data = load_column(path, f"{label}_{i}_{name}.{ending}", 0)
+                elif name in ["MRD"]:
+                    data = np.loadtxt(f"{path}{label}_{i}_{name}.{ending}", delimiter=",")
+                else:
+                    data = np.loadtxt(f"{path}{label}_{i}_{name}.{ending}", delimiter=",")
+                    np.reshape(data, (-1, 160))
+                try:
+                    arr = np.concatenate([arr, data], axis=0) if len(arr) > 0 else data
+                except ValueError:
+                    # Usually due to a .csv file only containing 1 event
+                    raise celfa_exceptions.ErrorMismatch
+                    pass
 
             number_of_files -= 1
         except OSError:
