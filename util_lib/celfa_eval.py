@@ -221,12 +221,13 @@ class Evaluator:
         ordering of stats_data.
         """
         if self.stats_dict is None:
-            return
-        i = 0
-        for key in self.data_dict:
-            if self.data_dict[key] in self.stats_data_indices:
-                self.stats_dict[key] = i
-                i += 1
+            pass
+        else:
+            i = 0
+            for key in self.data_dict:
+                if self.data_dict[key] in self.stats_data_indices:
+                    self.stats_dict[key] = i
+                    i += 1
 
     def __create_test_data(self) -> None:
         """Initialize test_data from test_data selected by net_data_indices."""
