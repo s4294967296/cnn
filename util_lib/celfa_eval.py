@@ -558,7 +558,8 @@ class Evaluator:
                                ylim: tuple = None,
                                xlbl: str = None,
                                ylbl: str = None,
-                               **kwargs):
+                               return_data: bool = False,
+                               **kwargs) -> Union[None, List]:
         # TODO: DOCSTRING
         # TODO: make flexible for electron as well etc.
         """Plots predicted count / total count per bin vs. data_name"""
@@ -587,20 +588,23 @@ class Evaluator:
         _ = plt.scatter(bins, percent_predicted_per_bin,
                         **kwargs)
 
-        # plt.legend(loc='best', fontsize=11)
-
-        plt.xlabel(data_name) if xlbl is None else plt.xlabel(xlbl)
-        if self.mode == "em":
-            plt.ylabel("Predicted % Muon events per bin") if ylbl is None else plt.ylabel(ylbl)
+        if return_data:
+            return [bins, percent_predicted_per_bin]
         else:
-            plt.ylabel("Predicted % SR events per bin") if ylbl is None else plt.ylabel(ylbl)
-        plt.title(f"{self.model_name}")
+            plt.xlabel(data_name) if xlbl is None else plt.xlabel(xlbl)
+            if self.mode == "em":
+                plt.ylabel("Predicted % Muon events per bin") if ylbl is None else plt.ylabel(ylbl)
+            else:
+                plt.ylabel("Predicted % SR events per bin") if ylbl is None else plt.ylabel(ylbl)
+            plt.title(f"{self.model_name}")
 
-        if xlim is not None:
-            plt.xlim(xlim)
-        if ylim is not None:
-            plt.ylim(ylim)
-        plt.show()
+            if xlim is not None:
+                plt.xlim(xlim)
+            if ylim is not None:
+                plt.ylim(ylim)
+            plt.show()
+
+            return None
 
     def plot_prediction_accuracy(self, category=None, histtype="bar", style: str = "continuous", **kwargs):
         # TODO: documentation
@@ -654,7 +658,8 @@ class Evaluator:
                                    ylim: tuple = None,
                                    xlbl: str = None,
                                    ylbl: str = None,
-                                   **kwargs):
+                                   return_data: bool = False,
+                                   **kwargs) -> Union[None, List]:
         # TODO: documentation
         """Plots y_prob % 'confidence' for an event."""
         if not self.real_test_data:
@@ -683,23 +688,26 @@ class Evaluator:
                     selected_class_predictions[event][np.where(
                         np.array(self.category_values_dict[category]) == 1)[0][0]])
 
-        _ = plt.hist(probabilities_class, bins=bins, histtype="bar",
-                     label=f"Prediction % for class {category}", **kwargs)
-        _ = plt.hist(probabilities_other_class, bins=bins, histtype="bar",
-                     label="Prediction % for any other class", **kwargs)
-        plt.legend(loc='best', fontsize=11)
+        if return_data:
+            return [probabilities_class, probabilities_other_class, bins]
+        else:
+            _ = plt.hist(probabilities_class, bins=bins, histtype="bar",
+                         label=f"Prediction % for class {category}", **kwargs)
+            _ = plt.hist(probabilities_other_class, bins=bins, histtype="bar",
+                         label="Prediction % for any other class", **kwargs)
+            plt.legend(loc='best', fontsize=11)
 
-        plt.xlabel(f"Predicted probability of being of the class {category}") if xlbl is None else plt.xlabel(xlbl)
-        plt.ylabel("Count") if ylbl is None else plt.ylabel(ylbl)
+            plt.xlabel(f"Predicted probability of being of the class {category}") if xlbl is None else plt.xlabel(xlbl)
+            plt.ylabel("Count") if ylbl is None else plt.ylabel(ylbl)
 
-        plt.title(f"{self.model_name}")
+            plt.title(f"{self.model_name}")
 
-        if xlim is not None:
-            plt.xlim(xlim)
-        if ylim is not None:
-            plt.ylim(ylim)
+            if xlim is not None:
+                plt.xlim(xlim)
+            if ylim is not None:
+                plt.ylim(ylim)
 
-        plt.show()
+            plt.show()
 
     def plot_confusion_matrix(self,
                               normalized: bool = True,
@@ -1188,11 +1196,25 @@ class Bundle:
     def plot_probability_histogram(self, *args, **kwargs):
         # TODO: documentation
         """Plots y_prob % 'confidence' for an event."""
+        to_plot = []
         for i in range(len(self.evals)):
             if i in self.real_data_indices:
-                (self.evals[i]).plot_probability_histogram(*args, **kwargs)
+                ret = (self.evals[i]).plot_probability_histogram(*args, **kwargs)
+                if ret is not None:
+                    to_plot.append([ret, i])
+                else:
+                    pass
             else:
                 pass
+        if to_plot:
+            for entry in to_plot:
+                _ = plt.hist([*entry[0][0], *entry[0][1]], bins=entry[0][2], histtype="bar",
+                             label=f"Prediction % for selected class of {self.evals[entry[1]].model_name}", **kwargs)
+                plt.legend(loc='best', fontsize=11)
+
+                plt.xlabel(f"Predicted probability of being of the selected class")
+                plt.ylabel("Count")
+            plt.show()
 
     def plot_confusion_matrix(self, *args, **kwargs):
         for i in range(len(self.evals)):
