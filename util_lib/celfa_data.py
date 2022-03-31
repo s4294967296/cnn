@@ -633,3 +633,13 @@ def dataset_stats(data_names: List[str],
             print("Number of muon events: ", len(cleaned_muon_energy_data))
             print("Muon energy average (cleaned, no '0' entries): ", muon_energy_cleaned_average)
             print("Muon energy median (cleaned, no '0' entries): ", muon_energy_cleaned_median)
+
+        elif entry == "NeutronNumber":
+            # muon stats
+            neutron_data = [x[data_names.index(entry)] for x in data]
+
+            neutron_count_average = np.average(neutron_data)
+            neutron_count_median = np.median(neutron_data)
+
+            print("Average neutron count: ", neutron_count_average)
+            print("Median neutron count: ", neutron_count_median)
