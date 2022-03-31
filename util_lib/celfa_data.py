@@ -605,8 +605,8 @@ def dataset_stats(data_names: List[str],
                       np.average([x[data_names.index("VisibleEnergy")] for x in mr_events]))
                 print("Median MR visible energy: ",
                       np.median([x[data_names.index("VisibleEnergy")] for x in mr_events]))
-            print("null ring events: ", null_r_count)
-            print("negative ring events: ", negative_r_count)
+            print("Null ring events: ", null_r_count)
+            print("Negative ring events: ", negative_r_count)
 
         elif entry == "EnergyElectron":
             # electron stats
@@ -618,8 +618,8 @@ def dataset_stats(data_names: List[str],
             electron_energy_cleaned_median = np.median(cleaned_electron_energy_data)
 
             print("Number of electron events: ", len(cleaned_electron_energy_data))
-            print("electron energy average (cleaned, no '0' entries): ", electron_energy_cleaned_average)
-            print("electron energy median (cleaned, no '0' entries): ", electron_energy_cleaned_median)
+            print("Electron energy average (cleaned, no '0' entries): ", electron_energy_cleaned_average)
+            print("Electron energy median (cleaned, no '0' entries): ", electron_energy_cleaned_median)
 
         elif entry == "EnergyMuon":
             # muon stats
@@ -631,5 +631,5 @@ def dataset_stats(data_names: List[str],
             muon_energy_cleaned_median = np.median(cleaned_muon_energy_data)
 
             print("Number of muon events: ", len(cleaned_muon_energy_data))
-            print("muon energy average (cleaned, no '0' entries): ", muon_energy_cleaned_average)
-            print("muon energy median (cleaned, no '0' entries): ", muon_energy_cleaned_median)
+            print("Muon energy average (cleaned, no '0' entries): ", muon_energy_cleaned_average)
+            print("Muon energy median (cleaned, no '0' entries): ", muon_energy_cleaned_median)
