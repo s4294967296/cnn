@@ -236,7 +236,7 @@ def load_data(path: str,
             else:
                 if name in ["EnergyMuon", "EnergyElectron"]:
                     data = load_column(path, f"{label}_{i}_{name}.{ending}", 2)
-                elif name in ["VisibleEnergy", "Rings"]:
+                elif name in ["VisibleEnergy", "Rings", "NeutronNumber"]:
                     data = load_column(path, f"{label}_{i}_{name}.{ending}", 0)
                 elif name in ["MRD"]:
                     data = np.loadtxt(f"{path}{label}_{i}_{name}.{ending}", delimiter=",")
