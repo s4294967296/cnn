@@ -617,6 +617,7 @@ def dataset_stats(data_names: List[str],
             electron_energy_cleaned_average = np.average(cleaned_electron_energy_data)
             electron_energy_cleaned_median = np.median(cleaned_electron_energy_data)
 
+            print("Number of electron events: ", len(cleaned_electron_energy_data))
             print("electron energy average (cleaned, no '0' entries): ", electron_energy_cleaned_average)
             print("electron energy median (cleaned, no '0' entries): ", electron_energy_cleaned_median)
 
@@ -629,5 +630,6 @@ def dataset_stats(data_names: List[str],
             muon_energy_cleaned_average = np.average(cleaned_muon_energy_data)
             muon_energy_cleaned_median = np.median(cleaned_muon_energy_data)
 
+            print("Number of muon events: ", len(cleaned_muon_energy_data))
             print("muon energy average (cleaned, no '0' entries): ", muon_energy_cleaned_average)
             print("muon energy median (cleaned, no '0' entries): ", muon_energy_cleaned_median)
