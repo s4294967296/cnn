@@ -559,6 +559,15 @@ def dataset_stats(data_names: List[str],
     print("Total # of events: ", total_events)
 
     for entry in data_names:
+        if entry == "charge":
+            # charge stats
+            charge_data = [x[data_names.index(entry)] for x in data]
+            charge_null_sum = 0
+            for c in charge_data:
+                if np.sum(c) == 0:
+                    charge_null_sum += 1
+            print("Events with 0 charge sum: ", charge_null_sum)
+
         if entry == "VisibleEnergy":
             # vis energy stats
             vis_energy_data = [x[data_names.index(entry)] for x in data]
