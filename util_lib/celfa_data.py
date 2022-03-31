@@ -580,6 +580,8 @@ def dataset_stats(data_names: List[str],
             sr_count, mr_count, null_r_count, negative_r_count = 0, 0, 0, 0
             sr_events, mr_events = [], []
             for event in data:
+                if event[data_names.index(entry)] > 10:
+                    print("ringc: ", event[data_names.index(entry)], " index: ", data.index(event))
                 if event[data_names.index(entry)] > 1:
                     mr_count += 1
                     mr_events.append(event)
@@ -592,12 +594,14 @@ def dataset_stats(data_names: List[str],
                     negative_r_count += 1
 
             print("SR events: ", sr_count)
+
             if "VisibleEnergy" in data_names:
                 print("Average SR visible energy: ",
                       np.average([x[data_names.index("VisibleEnergy")] for x in sr_events]))
                 print("Median SR visible energy: ",
                       np.median([x[data_names.index("VisibleEnergy")] for x in sr_events]))
             print("MR events: ", mr_count)
+
             if "VisibleEnergy" in data_names:
                 print("Average MR visible energy: ",
                       np.average([x[data_names.index("VisibleEnergy")] for x in mr_events]))
@@ -605,6 +609,7 @@ def dataset_stats(data_names: List[str],
                       np.median([x[data_names.index("VisibleEnergy")] for x in mr_events]))
             print("null ring events: ", null_r_count)
             print("negative ring events: ", negative_r_count)
+
         elif entry == "EnergyElectron":
             # electron stats
             electron_energy_data = data[data_names.index(entry)]
