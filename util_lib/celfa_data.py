@@ -542,3 +542,89 @@ def select_data(data, indices):
             temp.append(entry[index])
         s_data.append(temp)
     return s_data
+
+
+# data set stuff
+def dataset_stats(data_names: List[str],
+                  path: str,
+                  label: str,
+                  number_of_files: int = -1,
+                  file_index_edges: List[int] = None,
+                  beam_mrd_coinc: bool = False):
+    """TODO DOCSTR"""
+    data = construct_data_array(data_names, path, label, number_of_files=number_of_files,
+                                file_index_edges=file_index_edges, beam_mrd_coinc=beam_mrd_coinc)
+
+    total_events = len(data)
+    print("Total # of events: ", total_events)
+
+    for i, entry in data_names:
+        if entry == "VisibleEnergy":
+            # vis energy stats
+            vis_energy_data = data[i]
+            vis_energy_average = np.average(vis_energy_data)
+            vis_energy_median = np.median(vis_energy_data)
+
+            print("vis energy average: ", vis_energy_average)
+            print("vis energy median: ", vis_energy_median)
+
+        elif entry == "Rings":
+            # ring stats
+            ring_data = data[i]
+            ring_average = np.average(ring_data)
+            ring_median = np.median(ring_data)
+
+            print("ring count average: ", ring_average)
+            print("ring count median: ", ring_median)
+
+            sr_count, mr_count, null_r_count, negative_r_count = 0, 0, 0, 0
+            sr_events, mr_events = [], []
+            for event in data:
+                if event[i] > 1:
+                    mr_count += 1
+                    mr_events.append(event)
+                elif event[i] == 1:
+                    sr_count += 1
+                    sr_events.append(event)
+                elif event[i] == 0:
+                    null_r_count += 1
+                elif event[i] < 0:
+                    negative_r_count += 1
+
+            print("SR events: ", sr_count)
+            if "VisibleEnergy" in data_names:
+                print("Average SR visible energy: ",
+                      np.average([x[data_names.index("VisibleEnergy")] for x in sr_events]))
+                print("Median SR visible energy: ",
+                      np.median([x[data_names.index("VisibleEnergy")] for x in sr_events]))
+            print("MR events: ", mr_count)
+            if "VisibleEnergy" in data_names:
+                print("Average MR visible energy: ",
+                      np.average([x[data_names.index("VisibleEnergy")] for x in mr_events]))
+                print("Median MR visible energy: ",
+                      np.median([x[data_names.index("VisibleEnergy")] for x in mr_events]))
+            print("null ring events: ", null_r_count)
+            print("negative ring events: ", negative_r_count)
+        elif entry == "EnergyElectron":
+            # electron stats
+            electron_energy_data = data[i]
+            to_be_removed = np.array([0])
+            cleaned_electron_energy_data = np.setdiff1d(electron_energy_data, to_be_removed)
+
+            electron_energy_cleaned_average = np.average(cleaned_electron_energy_data)
+            electron_energy_cleaned_median = np.median(cleaned_electron_energy_data)
+
+            print("electron energy average (cleaned, no '0' entries): ", electron_energy_cleaned_average)
+            print("electron energy median (cleaned, no '0' entries): ", electron_energy_cleaned_median)
+
+        elif entry == "EnergyMuon":
+            # muon stats
+            muon_energy_data = data[i]
+            to_be_removed = np.array([0])
+            cleaned_muon_energy_data = np.setdiff1d(muon_energy_data, to_be_removed)
+
+            muon_energy_cleaned_average = np.average(cleaned_muon_energy_data)
+            muon_energy_cleaned_median = np.median(cleaned_muon_energy_data)
+
+            print("muon energy average (cleaned, no '0' entries): ", muon_energy_cleaned_average)
+            print("muon energy median (cleaned, no '0' entries): ", muon_energy_cleaned_median)
