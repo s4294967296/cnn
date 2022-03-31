@@ -219,7 +219,7 @@ def load_data(path: str,
             if beam_mrd_coinc:
                 if name in ["EnergyMuon", "EnergyElectron"]:
                     data = load_column(path, f"R{i}_{label}_{name}.{ending}", 2)
-                elif name in ["VisibleEnergy", "Rings"]:
+                elif name in ["VisibleEnergy", "Rings", "NeutronNumber"]:
                     data = load_column(path, f"R{i}_{label}_{name}.{ending}", 0)
                 elif name in ["MRD"]:
                     data = np.loadtxt(f"{path}R{i}_{label}_{name}.{ending}", delimiter=",")
