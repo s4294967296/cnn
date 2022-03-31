@@ -580,8 +580,6 @@ def dataset_stats(data_names: List[str],
             sr_count, mr_count, null_r_count, negative_r_count = 0, 0, 0, 0
             sr_events, mr_events = [], []
             for event in data:
-                if event[data_names.index(entry)] > 10:
-                    print("ringc: ", event[data_names.index(entry)], " index: ", data.index(event))
                 if event[data_names.index(entry)] > 1:
                     mr_count += 1
                     mr_events.append(event)
