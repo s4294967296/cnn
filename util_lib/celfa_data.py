@@ -561,7 +561,7 @@ def dataset_stats(data_names: List[str],
     for entry in data_names:
         if entry == "VisibleEnergy":
             # vis energy stats
-            vis_energy_data = data[data_names.index("entry")]
+            vis_energy_data = data[data_names.index(entry)]
             vis_energy_average = np.average(vis_energy_data)
             vis_energy_median = np.median(vis_energy_data)
 
@@ -570,7 +570,7 @@ def dataset_stats(data_names: List[str],
 
         elif entry == "Rings":
             # ring stats
-            ring_data = data[data_names.index("entry")]
+            ring_data = data[data_names.index(entry)]
             ring_average = np.average(ring_data)
             ring_median = np.median(ring_data)
 
@@ -580,15 +580,15 @@ def dataset_stats(data_names: List[str],
             sr_count, mr_count, null_r_count, negative_r_count = 0, 0, 0, 0
             sr_events, mr_events = [], []
             for event in data:
-                if event[i] > 1:
+                if event[data_names.index(entry)] > 1:
                     mr_count += 1
                     mr_events.append(event)
-                elif event[i] == 1:
+                elif event[data_names.index(entry)] == 1:
                     sr_count += 1
                     sr_events.append(event)
-                elif event[i] == 0:
+                elif event[data_names.index(entry)] == 0:
                     null_r_count += 1
-                elif event[i] < 0:
+                elif event[data_names.index(entry)] < 0:
                     negative_r_count += 1
 
             print("SR events: ", sr_count)
@@ -607,7 +607,7 @@ def dataset_stats(data_names: List[str],
             print("negative ring events: ", negative_r_count)
         elif entry == "EnergyElectron":
             # electron stats
-            electron_energy_data = data[data_names.index("entry")]
+            electron_energy_data = data[data_names.index(entry)]
             to_be_removed = np.array([0])
             cleaned_electron_energy_data = np.setdiff1d(electron_energy_data, to_be_removed)
 
@@ -619,7 +619,7 @@ def dataset_stats(data_names: List[str],
 
         elif entry == "EnergyMuon":
             # muon stats
-            muon_energy_data = data[data_names.index("entry")]
+            muon_energy_data = data[data_names.index(entry)]
             to_be_removed = np.array([0])
             cleaned_muon_energy_data = np.setdiff1d(muon_energy_data, to_be_removed)
 
