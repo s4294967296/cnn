@@ -574,8 +574,8 @@ def dataset_stats(data_names: List[str],
             vis_energy_average = np.average(vis_energy_data)
             vis_energy_median = np.median(vis_energy_data)
 
-            print("vis energy average: ", vis_energy_average)
-            print("vis energy median: ", vis_energy_median)
+            print("Vis energy average: ", vis_energy_average)
+            print("Vis energy median: ", vis_energy_median)
 
         elif entry == "Rings":
             # ring stats
@@ -583,8 +583,8 @@ def dataset_stats(data_names: List[str],
             ring_average = np.average(ring_data)
             ring_median = np.median(ring_data)
 
-            print("ring count average: ", ring_average)
-            print("ring count median: ", ring_median)
+            print("Ring count average: ", ring_average)
+            print("Ring count median: ", ring_median)
 
             sr_count, mr_count, null_r_count, negative_r_count = 0, 0, 0, 0
             sr_events, mr_events = [], []
