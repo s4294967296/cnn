@@ -70,11 +70,8 @@ class Evaluator:
         Used for high-level evaluation and presentation of data, meant as an easy way to evaluate model performance.
         Requires at least model_path. The model will be loaded into self.model as a keras.model. To access plotting
         functionality, data_dict and stats_data_indices needs to be provided.
-
         ----------------------------------------------------------------------------------------------------------------
-
         An example for creating an Evaluator object, and some basic functionality:
-
         ev = Evaluator(model_path="PATH",
                        model_name="Example_evaluator",
                        test_data=test_data_set,
@@ -82,40 +79,27 @@ class Evaluator:
                        stats_data_indices=[2, 3],
                        cat_values_dict={"Electron": [1, 0], "Muon": [0, 1]},
                        data_dict={"Charge": 0, "Time": 1, "Energy": 2, "VisibleEnergy": 3})
-
         In this example. Charge and time data has been used for training (net_data_indices=[0,1]) and "Energy" as well
         as "VisibleEnergy" will be used by the Evaluator to plot histograms, prediction accuracy vs "Energy"
         or "VisibleEnergy" etc. data_dict defines the keys by which data will be accessed. For example,
-
         ev.plot_histogram("VisibleEnergy")
-
         will plot a histogram of the data located at position data_dict["VisibleEnergy"] = 3 of the data given in
         test_data.
-
         ----------------------------------------------------------------------------------------------------------------
-
         Some other basic examples:
         -----
-
         ev.plot_confusion_matrix(savefig=True, normalized=False, title="CM Absolute", filename="cm_xxx")
-
         -> This will plot the non-normalized confusion matrix with the title "CM Absolute", and saves it in the current
             directory as "cm_xxx.pdf"
         -----
-
         ev.plot_histogram("VisibleEnergy", category=["Muon", "Electron"], bins=100, histtype=["step", "bar"])
-
         -> This will plot two histograms in the same plot of VisibleEnergy for Muon and Electron events, using 100 bins
             and the style of the Muon plot being "step" (matplotlib.pyplot), and similarly, the style of the Electron
             plot being "bar".
         -----
-
         ev.plot_accuracy("VisibleEnergy", category="Muon")
-
         -> This will plot Muon VisibleEnergy vs. model prediction accuracy.
-
         ----------------------------------------------------------------------------------------------------------------
-
         :rtype: None
         :return: None
         :param mode: Specifies the mode of operation. 'em' -> e/mu classification; 'rc' -> ring counting/classification
@@ -288,18 +272,18 @@ class Evaluator:
         # since the order is crucial.
         if self.real_test_data:
             if self.stats_dict is None:
-                list(zip([0 for i in range(len(self.__predicted_category_values))],
-                         [0 for i in range(len(self.__predicted_category_values))],
+                list(zip([0 for _ in range(len(self.__predicted_category_values))],
+                         [0 for _ in range(len(self.__predicted_category_values))],
                          self.y_prob,
                          self.__predicted_category_values))
             else:
                 self.stats_data = list(zip(self.stats_data,
-                                           [0 for i in range(len(self.__predicted_category_values))],
+                                           [0 for _ in range(len(self.__predicted_category_values))],
                                            self.y_prob,
                                            self.__predicted_category_values))
         else:
             if self.stats_dict is None:
-                self.stats_data = list(zip([0 for i in range(len(self.__predicted_category_values))],
+                self.stats_data = list(zip([0 for _ in range(len(self.__predicted_category_values))],
                                            self.test_category_values,
                                            self.y_prob,
                                            self.__predicted_category_values))
@@ -362,7 +346,6 @@ class Evaluator:
         """
         Return list of data from self.stats_data, given one of the categories defined when creating the Evaluator
         (self.category_values_dict). Return only data specified by data_name.
-
         :param data_name: Name of the data which will be selected. Requires the same identifier as defined in data_dict
             upon class instantiation.
         :param category: Which category will be selected from the data provided (e.g. "Electron"). If none is provided,
@@ -435,7 +418,6 @@ class Evaluator:
                    filename: str = None) -> None:
         """
         Save a figure.
-
         :param file_format: Format of the saved file. Default = "pdf"
         :param filename: Filename of the saved figure.
         :return: None
@@ -451,7 +433,6 @@ class Evaluator:
     def evaluate_model(self, verbose=False):
         """
         Score the model on provided test data. Use verbose = True to print stats about score.
-
         :param verbose: The verbosity parameter will be passed to keras.model.evaluate().
         """
         if self.score is None:
@@ -467,7 +448,6 @@ class Evaluator:
                                 equal_counts: bool = False) -> list:
         """
         Create bins, specified by 'bins' and data.
-
         :param bins: Accepts an array-like object to specify bin cutoffs, an int for evenly spaced bins between
             the min and max value of the data provided, or the string "auto", for 100 evenly spaced bins. Omitting will
             default to auto.
@@ -659,12 +639,12 @@ class Evaluator:
                                    xlbl: str = None,
                                    ylbl: str = None,
                                    return_data: bool = False,
+                                   title: str = None,
                                    **kwargs) -> Union[None, List]:
         # TODO: documentation
         """Plots y_prob % 'confidence' for an event."""
-        if not self.real_test_data:
-            raise celfa_exceptions.ErrorParameter
-        elif category is None:
+
+        if category is None:
             raise celfa_exceptions.ErrorParameter
 
         selected_data = self.stats_data
@@ -700,13 +680,14 @@ class Evaluator:
             plt.xlabel(f"Predicted probability of being of the class {category}") if xlbl is None else plt.xlabel(xlbl)
             plt.ylabel("Count") if ylbl is None else plt.ylabel(ylbl)
 
-            plt.title(f"{self.model_name}")
-
             if xlim is not None:
                 plt.xlim(xlim)
             if ylim is not None:
                 plt.ylim(ylim)
-
+            if title is None:
+                plt.title(f"{self.model_name}")
+            else:
+                plt.title(title)
             plt.show()
 
     def plot_confusion_matrix(self,
@@ -718,7 +699,6 @@ class Evaluator:
                               file_format: str = None) -> None:
         """
         Plots the confusion matrix for Electron and Muon event classification.
-
         :param cmap: Colour map of the plot. See matplotlib.cmap
         :param normalized: Plot the confusion matrix normalized?
         :param title: Title of the confusion matrix. If none is provided, the title will be generated based on
@@ -783,7 +763,6 @@ class Evaluator:
                               **kwargs) -> None:
         """
         Plot a histogram (number of counts vs data).
-
         :param ylbl: Text for y-axis label.
         :param xlbl: Text for x-axis label.
         :param file_format: Format of the saved figure. Default (provided by self.__save_fig()) is 'pdf'.
@@ -855,7 +834,6 @@ class Evaluator:
                        **kwargs) -> None:
         """
         Plot a histogram (number of counts vs data).
-
         :param ylbl: Text for y-axis label.
         :param xlbl: Text for x-axis label.
         :param file_format: Format of the saved figure. Default (provided by self.__save_fig()) is 'pdf'.
@@ -889,7 +867,7 @@ class Evaluator:
             except KeyError:
                 return None
         if type(category) is list:
-            for entry in category:
+            for _ in category:
                 try:
                     _ = self.stats_data[category]
                 except KeyError:
@@ -963,15 +941,11 @@ class Evaluator:
                       **kwargs) -> None:
         """
         Plot model accuracy (accuracy vs data).
-
         ----------------------------------------------------------------------------------------------------------------
-
         Note:
         -----
-
         Data points beyond - if provided - xlim are automatically dropped; if no xlim has been provided, discounts all
         data points beyond the first and last bin border.
-
         :param plot_at_center_of_bins: If true, centers the data on centers of bins. In the process, the last data point
             is dropped.
         :param error_bars: Includes error bars. Using Clopper-Pearson interval based on beta distribution.
@@ -1193,7 +1167,7 @@ class Bundle:
             else:
                 pass
 
-    def plot_probability_histogram(self, *args, **kwargs):
+    def plot_probability_histogram(self, bins=None, log=True, *args, **kwargs):
         # TODO: documentation
         """Plots y_prob % 'confidence' for an event."""
         to_plot = []
@@ -1208,9 +1182,10 @@ class Bundle:
                 pass
         if to_plot:
             for entry in to_plot:
+                print(entry[0][2])
                 _ = plt.hist([*entry[0][0], *entry[0][1]], bins=entry[0][2], histtype="bar",
-                             label=f"Prediction % for selected class of {self.evals[entry[1]].model_name}", **kwargs)
-                plt.legend(loc='best', fontsize=11)
+                             label=f"Prediction % for selected class of {self.evals[entry[1]].model_name}", alpha=0.5, log=log)
+                plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fontsize=11)
 
                 plt.xlabel(f"Predicted probability of being of the selected class")
                 plt.ylabel("Count")
@@ -1233,12 +1208,9 @@ class Bundle:
     def plot_accuracy(self, *args, **kwargs) -> None:
         """
         Plot model accuracy (accuracy vs data).
-
         ----------------------------------------------------------------------------------------------------------------
-
         Note:
         -----
-
         Data points beyond - if provided - xlim are automatically dropped; if no xlim has been provided, discounts all
         data points beyond the first and last bin border.
         """
