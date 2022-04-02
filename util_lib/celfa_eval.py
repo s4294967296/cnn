@@ -326,17 +326,17 @@ class Evaluator:
         """Return self.__predicted_category_values"""
         return self.__predicted_category_values
 
-    def print_cm_entry(self, x: int, y: int, normalized=False):
-        """Print an entry of the confusion matrix."""
+    def get_cm_entry(self, x: int, y: int, normalized=False):
+        """ Get an entry of the confusion matrix. x and y define cm coordinates. """
         if normalized:
-            print(self.cm_normalized[x][y])
+            return self.cm_normalized[x][y]
         else:
-            print(self.cm[x][y])
+            return self.cm[x][y]
 
     def print_category_count(self) -> None:
         """Print category counts and the form of the unique categories."""
-        print("How much from one kind, how much from the other: \n", self.counts_per_category)
-        print("What do they look like? \n", self.unique_categories)
+        print("Counts per category:\n", self.counts_per_category)
+        print("Category shapes:\n", self.unique_categories)
 
     # Data-stuff
     def select_stats_data_by_data_name(self,
@@ -346,6 +346,7 @@ class Evaluator:
         """
         Return list of data from self.stats_data, given one of the categories defined when creating the Evaluator
         (self.category_values_dict). Return only data specified by data_name.
+
         :param data_name: Name of the data which will be selected. Requires the same identifier as defined in data_dict
             upon class instantiation.
         :param category: Which category will be selected from the data provided (e.g. "Electron"). If none is provided,
@@ -377,9 +378,11 @@ class Evaluator:
                     tdata.append(entry[0][self.stats_dict[data_name]])
         return tdata
 
-    def select_stats_data_by_category(self, category: str = None):
+    def select_stats_data_by_category(self, category: Union[str, None] = None):
         """
         Return entries of self.stats_data which fit the specified category.
+
+        Allowing category = None allows for simpler handling in the Bundle class.
         """
         if category is None:
             return self.stats_data
@@ -414,25 +417,23 @@ class Evaluator:
 
     def __save_fig(self,
                    fig: plt.Figure = None,
-                   file_format: str = None,
+                   file_format: str = "pdf",
                    filename: str = None) -> None:
         """
         Save a figure.
+
         :param file_format: Format of the saved file. Default = "pdf"
         :param filename: Filename of the saved figure.
         :return: None
         """
-        if file_format is None:
-            file_format = "pdf"
 
-        if filename is None:
-            fig.savefig(self.model_name, format=file_format, bbox_inches="tight")
-        else:
-            fig.savefig(filename, format=file_format, bbox_inches="tight")
+        filename = self.model_name if filename is None else filename
+        fig.savefig(self.model_name, format=file_format, bbox_inches="tight")
 
     def evaluate_model(self, verbose=False):
         """
         Score the model on provided test data. Use verbose = True to print stats about score.
+
         :param verbose: The verbosity parameter will be passed to keras.model.evaluate().
         """
         if self.score is None:
@@ -448,6 +449,7 @@ class Evaluator:
                                 equal_counts: bool = False) -> list:
         """
         Create bins, specified by 'bins' and data.
+
         :param bins: Accepts an array-like object to specify bin cutoffs, an int for evenly spaced bins between
             the min and max value of the data provided, or the string "auto", for 100 evenly spaced bins. Omitting will
             default to auto.
@@ -456,12 +458,11 @@ class Evaluator:
             splitting data with the exact same values into multiple bins is not supported.
         :return: list of bins.
         """
-        if bins == "auto" or bins is None or (type(bins) == int and not equal_counts):
+        if (type(bins) == int or bins == "auto" or bins is None) and not equal_counts:
             if type(bins) == int:
-                number_of_bins = bins
-                number_of_bins += 1
+                number_of_bins = bins + 1
             else:
-                number_of_bins = 100 + 1
+                number_of_bins = 101
             bins = []
             step = (np.max(data) - np.min(data)) / number_of_bins
             for i in range(number_of_bins):
@@ -485,6 +486,7 @@ class Evaluator:
         return bins
 
     def get_auc(self):
+        """Simply return roc_auc_score."""
         return roc_auc_score(self.test_category_values, self.y_prob)
 
     def plot_roc(self,
@@ -493,12 +495,29 @@ class Evaluator:
                  ylim: tuple = None,
                  xlbl: str = None,
                  ylbl: str = None,
+                 title: str = None,
                  savefig: bool = False,
                  filename: bool = None,
                  file_format: str = None,
                  **kwargs
-                 ):
-        # TODO: DOCUMENTATION
+                 ) -> None:
+        """
+        Plot the ROC-Curve.
+
+        :param category: Category for which the ROC-Curve is plotted.
+        :param ylbl: Text for y-axis label.
+        :param xlbl: Text for x-axis label.
+        :param file_format: Format of the saved figure. Default (provided by self.__save_fig()) is 'pdf'.
+        :param savefig: Save figure?
+        :param filename: Filename of the saved figure.
+        :param xlim: Limits of the x-axis. Accepts tuple or similar.
+        :param ylim: Limits of the y-axis. Accepts tuple or similar.
+        :param title: Title of the plot. If none is provided, the title will be generated based on the provided
+            parameters.
+        :param kwargs: Will be passed directly to plt.plot(), for valid arguments see documentation of
+            matplotlib.pyplot.plot().
+        :return: None. Shows plot.
+        """
 
         fpr, tpr, threshold, roc_auc = dict(), dict(), dict(), dict()
         for i in range(len(self.category_values_dict)):
@@ -512,18 +531,21 @@ class Evaluator:
                               == np.amax(self.category_values_dict[category]))[0][0]],
                  tpr[np.where(self.category_values_dict[category]
                               == np.amax(self.category_values_dict[category]))[0][0]],
-                 label=f'ROC curve {self.get_auc()}')
+                 label=f'ROC curve {self.get_auc()}', **kwargs)
 
         plt.legend(loc="lower right", fontsize=12)
 
         plt.xlabel("Residual fraction background", fontsize=14) if xlbl is None else plt.xlabel(xlbl)
         plt.ylabel("PSignal efficiency", fontsize=14) if ylbl is None else plt.ylabel(ylbl)
-        plt.title(f"{self.model_name}")
+
+        title = self.model_name if title is None else title
+        plt.title(title)
 
         if xlim is not None:
             plt.xlim(xlim)
         if ylim is not None:
             plt.ylim(ylim)
+
         plt.show()
 
         if savefig:
@@ -533,17 +555,47 @@ class Evaluator:
                                data_name=None,
                                category=None,
                                bins: Union[str, int, list, None] = "auto",
-                               histtype="bar",
+
+                               title: Union[None, str] = None,
                                xlim: tuple = None,
                                ylim: tuple = None,
                                xlbl: str = None,
                                ylbl: str = None,
-                               return_data: bool = False,
-                               **kwargs) -> Union[None, List]:
-        # TODO: DOCSTRING
-        # TODO: make flexible for electron as well etc.
-        """Plots predicted count / total count per bin vs. data_name"""
 
+                               return_data: bool = False,
+                               savefig: bool = False,
+                               file_format: str = "pdf",
+                               filename: str = None,
+                               **kwargs) -> Union[None, List]:
+        """
+        Plots predicted count / total count per bin vs. data_name.
+
+        :param data_name: Name of the data which will be plotted. Requires the same identifier as defined in data_dict
+            upon class instantiation.
+        :param bins: Pass 'auto', a positive int, a list of bins, or None (auto). Bins will be constructed in
+            __create_bins_from_data.
+        :param category: Category for which the ROC-Curve is plotted.
+
+        :param title: Title of the plot. If none is provided, the title will be generated based on the provided
+            parameters.
+        :param xlim: Limits of the x-axis. Accepts tuple or similar.
+        :param ylim: Limits of the y-axis. Accepts tuple or similar.
+        :param xlbl: Text for x-axis label. If none is provided, the label will be generated based on the provided
+            parameters.
+        :param ylbl: Text for y-axis label. If none is provided, the label will be generated based on the provided
+            parameters.
+
+        :param return_data: If true, return data instead of plotting. The returned data is of the form
+            [bins, percent_predicted_per_bin].
+        :param savefig: Save figure?
+        :param file_format: Format of the saved figure. Default (provided by self.__save_fig()) is 'pdf'.
+        :param filename: Filename of the saved figure.
+
+        :param kwargs: Will be passed directly to plt.plot(), for valid arguments see documentation of
+             matplotlib.pyplot.plot().
+        :return: None(shows plot), or data.
+        """
+        fig = plt.figure()
         data = self.stats_data
         selected_data = self.select_stats_data_by_data_name(data_name)
         bins = self.__create_bins_from_data(bins, selected_data)
@@ -576,7 +628,9 @@ class Evaluator:
                 plt.ylabel("Predicted % Muon events per bin") if ylbl is None else plt.ylabel(ylbl)
             else:
                 plt.ylabel("Predicted % SR events per bin") if ylbl is None else plt.ylabel(ylbl)
-            plt.title(f"{self.model_name}")
+
+            title = f"{self.model_name} % predicted: {data_name}, {category}" if title is None else title
+            plt.title(title)
 
             if xlim is not None:
                 plt.xlim(xlim)
@@ -584,10 +638,52 @@ class Evaluator:
                 plt.ylim(ylim)
             plt.show()
 
+            if savefig:
+                self.__save_fig(fig, file_format, filename)
+
             return None
 
-    def plot_prediction_accuracy(self, category=None, histtype="bar", style: str = "continuous", **kwargs):
-        # TODO: documentation
+    def plot_prediction_confidence(self,
+                                   category=None,
+                                   histtype="bar",
+                                   style: str = "continuous",
+
+                                   title: Union[None, str] = None,
+                                   xlim: tuple = None,
+                                   ylim: tuple = None,
+                                   xlbl: str = None,
+                                   ylbl: str = None,
+
+                                   return_data: bool = False,
+                                   savefig: bool = False,
+                                   file_format: str = "pdf",
+                                   filename: str = None,
+                                   **kwargs) -> Union[None, List[List]]:
+        """
+        Plots a histogram of prediction confidence.
+
+        :param category: Category for which the prediction confidence is plotted.
+        :param histtype: See matplotlib implementation of hist.
+        :param style: Choose between continuous / split plot style. TODO
+
+        :param title: Title of the plot. If none is provided, the title will be generated based on the provided
+            parameters.
+        :param xlim: Limits of the x-axis. Accepts tuple or similar.
+        :param ylim: Limits of the y-axis. Accepts tuple or similar.
+        :param xlbl: Text for x-axis label. If none is provided, the label will be generated based on the provided
+            parameters.
+        :param ylbl: Text for y-axis label. If none is provided, the label will be generated based on the provided
+            parameters.
+
+        :param return_data: If true, return data instead of plotting. The returned data is of the form
+            [bins, correctly_classified_probabilities, incorrectly_classified_probabilities].
+        :param savefig: Save figure?
+        :param file_format: Format of the saved figure. Default (provided by self.__save_fig()) is 'pdf'.
+        :param filename: Filename of the saved figure.
+
+        :param kwargs: will be passed to plt.hist().
+        :return: None, or data. See param return_data.
+        """
         if category is None:
             raise celfa_exceptions.ErrorParameter
 
@@ -596,8 +692,8 @@ class Evaluator:
             selected_class_predictions = self.select_predicted_classes(selected_data)
             selected_category_value_predictions = self.select_predicted_category_values(selected_data)
 
+            fig = plt.figure()
             bins = self.__create_bins_from_data(100, [0.0, 1.0])
-
             correctly_classified_probabilities, incorrectly_classified_probabilities = [], []
 
             for event in range(len(selected_data)):
@@ -620,29 +716,77 @@ class Evaluator:
                 else:
                     raise celfa_exceptions.ErrorParameter
 
-            _ = plt.hist(correctly_classified_probabilities, bins=bins, histtype=histtype,
-                         label=f"True {category} event", **kwargs)
-            _ = plt.hist(incorrectly_classified_probabilities, bins=bins, histtype=histtype,
-                         label="Incorrect predictions", **kwargs)
+            if return_data:
+                return [bins, correctly_classified_probabilities, incorrectly_classified_probabilities]
+            else:
+                if style == "continuous":
+                    _ = plt.hist(
+                        np.concatenate(
+                            [correctly_classified_probabilities, incorrectly_classified_probabilities], axis=0),
+                        bins=bins, histtype=histtype, label=f"{category} event")
+                elif style == "split":
+                    _ = plt.hist(correctly_classified_probabilities, bins=bins, histtype=histtype,
+                                 label=f"True {category} event", **kwargs)
+                    _ = plt.hist(incorrectly_classified_probabilities, bins=bins, histtype=histtype,
+                                 label="Incorrect predictions", **kwargs)
             plt.legend(loc='best', fontsize=11)
+
+            title = f"{self.model_name} % prediction: {category}" if title is None else title
+            plt.title(title)
             plt.show()
 
+            if savefig:
+                self.__save_fig(fig, file_format, filename)
+
         elif type(category) is list:
-            # TODO
-            pass
+            for entry in category:
+                self.plot_prediction_confidence(entry, histtype, style, title, xlim, ylim, xlbl, ylbl, return_data,
+                                                savefig, file_format, filename, **kwargs)
         else:
             raise celfa_exceptions.ErrorParameter
 
-    def plot_probability_histogram(self, bins: Union[int, None] = None, category=None, style: str = "continuous",
+    def plot_probability_histogram(self,
+                                   bins: Union[int, None] = None,
+                                   category=None,
+                                   style: str = "continuous",
+
+                                   title: Union[None, str] = None,
                                    xlim: tuple = None,
                                    ylim: tuple = None,
                                    xlbl: str = None,
                                    ylbl: str = None,
+
                                    return_data: bool = False,
-                                   title: str = None,
+                                   savefig: bool = False,
+                                   file_format: str = "pdf",
+                                   filename: str = None,
                                    **kwargs) -> Union[None, List]:
-        # TODO: documentation
-        """Plots y_prob % 'confidence' for an event."""
+        """
+        Plots y_prob % 'confidence' for an event.
+
+        :param category: Category for which the prediction confidence is plotted.
+        :param style: Choose between continuous / split plot style. TODO
+        :param bins: Pass 'auto', a positive int, a list of bins, or None (auto). Bins will be constructed in
+            __create_bins_from_data.
+
+        :param title: Title of the plot. If none is provided, the title will be generated based on the provided
+            parameters.
+        :param xlim: Limits of the x-axis. Accepts tuple or similar.
+        :param ylim: Limits of the y-axis. Accepts tuple or similar.
+        :param xlbl: Text for x-axis label. If none is provided, the label will be generated based on the provided
+            parameters.
+        :param ylbl: Text for y-axis label. If none is provided, the label will be generated based on the provided
+            parameters.
+
+        :param return_data: If true, return data instead of plotting. The returned data is of the form
+            [bins, correctly_classified_probabilities, incorrectly_classified_probabilities].
+        :param savefig: Save figure?
+        :param file_format: Format of the saved figure. Default (provided by self.__save_fig()) is 'pdf'.
+        :param filename: Filename of the saved figure.
+
+        :param kwargs: will be passed to plt.hist().
+        :return: None, or data. See param return_data.
+        """
 
         if category is None:
             raise celfa_exceptions.ErrorParameter
@@ -652,6 +796,7 @@ class Evaluator:
         selected_category_value_predictions = self.select_predicted_category_values(selected_data)
 
         bins = self.__create_bins_from_data(bins, [0.0, 1.1])
+        fig = plt.figure()
 
         probabilities_class = []
         probabilities_other_class = []
@@ -685,26 +830,41 @@ class Evaluator:
             if ylim is not None:
                 plt.ylim(ylim)
             if title is None:
-                plt.title(f"{self.model_name}")
+                plt.title(f"{self.model_name} prob. histogram for {category}")
             else:
                 plt.title(title)
             plt.show()
 
+            if savefig:
+                self.__save_fig(fig, file_format, filename)
+
     def plot_confusion_matrix(self,
                               normalized: bool = True,
-                              title: str = None,
-                              cmap: str = "inferno",
+                              cmap: str = "Blues",
+
+                              title: Union[None, str] = None,
+                              xlbl: str = None,
+                              ylbl: str = None,
+
                               savefig: bool = False,
-                              filename: bool = None,
-                              file_format: str = None) -> None:
+                              file_format: str = "pdf",
+                              filename: str = None,
+                              ) -> None:
         """
         Plots the confusion matrix for Electron and Muon event classification.
+
         :param cmap: Colour map of the plot. See matplotlib.cmap
         :param normalized: Plot the confusion matrix normalized?
+
         :param title: Title of the confusion matrix. If none is provided, the title will be generated based on
             the provided parameters.
-        :param file_format: Format of the saved figure. Default (provided by self.__save_fig()) is 'pdf'.
+        :param xlbl: Text for x-axis label. If none is provided, the label will be generated based on the provided
+            parameters.
+        :param ylbl: Text for y-axis label. If none is provided, the label will be generated based on the provided
+            parameters.
+
         :param savefig: Save figure?
+        :param file_format: Format of the saved figure. Default (provided by self.__save_fig()) is 'pdf'.
         :param filename: Filename of the saved figure.
         """
         # TODO: Use  self.category_values_dict
@@ -719,11 +879,18 @@ class Evaluator:
 
         fig = plt.figure()
 
-        cmap = plt.get_cmap(cmap)
+        if cmap is not None:
+            cmap = plt.get_cmap(cmap)
+        else:
+            if normalized:
+                cmap = plt.get_cmap("Blues")
+            else:
+                cmap = plt.get_cmap("Purples")
+
         plt.imshow(local_cm, interpolation='nearest', cmap=cmap)
 
         if title is None:
-            title = f"CM - {self.model_name}"
+            title = f"CM normalized - {self.model_name}" if normalized else f"CM absolute - {self.model_name}"
         plt.title(title)
 
         plt.colorbar()
@@ -739,8 +906,13 @@ class Evaluator:
                      color="white" if local_cm[i, j] > thresh else "black")
 
         plt.tight_layout()
-        plt.ylabel('True label')
-        plt.xlabel('Predicted label')
+
+        if xlbl is None:
+            xlbl = "Predicted label"
+        if ylbl is None:
+            ylbl = "True label"
+        plt.xlabel(xlbl)
+        plt.ylabel(ylbl)
 
         plt.show()
 
@@ -763,6 +935,7 @@ class Evaluator:
                               **kwargs) -> None:
         """
         Plot a histogram (number of counts vs data).
+
         :param ylbl: Text for y-axis label.
         :param xlbl: Text for x-axis label.
         :param file_format: Format of the saved figure. Default (provided by self.__save_fig()) is 'pdf'.
@@ -834,6 +1007,7 @@ class Evaluator:
                        **kwargs) -> None:
         """
         Plot a histogram (number of counts vs data).
+
         :param ylbl: Text for y-axis label.
         :param xlbl: Text for x-axis label.
         :param file_format: Format of the saved figure. Default (provided by self.__save_fig()) is 'pdf'.
@@ -1147,29 +1321,36 @@ class Evaluator:
 
 
 class Bundle:
-    def __init__(self, evals: List[Evaluator],
-                 real_data_indices=None):
+    def __init__(self, evals: List[Evaluator], real_data_indices=None):
         self.evals = evals
         self.real_data_indices = real_data_indices
 
     def plot_percent_predicted(self, *args, **kwargs):
-        # TODO: DOCSTRING
-        # TODO: make flexible for electron as well etc.
-        """Plots predicted count / total count per bin vs. data_name"""
+        """Plots predicted count / total count per bin vs. data_name for each member of self.evals."""
         for evaluator in self.evals:
             evaluator.plot_percent_predicted(*args, **kwargs)
 
     def plot_prediction_accuracy(self, *args, **kwargs):
-        # TODO: documentation
+        """ Calls plot_prediction_confidence for each member of self.evals which support plot_prediction_confidence. """
         for i in range(len(self.evals)):
             if i not in self.real_data_indices:
-                (self.evals[i]).plot_prediction_accuracy(*args, **kwargs)
+                (self.evals[i]).plot_prediction_confidence(*args, **kwargs)
             else:
                 pass
 
-    def plot_probability_histogram(self, bins=None, log=True, *args, **kwargs):
-        # TODO: documentation
-        """Plots y_prob % 'confidence' for an event."""
+    def plot_probability_histogram(self,
+                                   bins: Union[None, str, List, int] = None,
+                                   log: bool = True,
+                                   density: bool = False,
+                                   *args,
+                                   **kwargs):
+        """
+        Plots y_prob % 'confidence' for an event. See also Evaluator.plot_probability_histogram()
+
+        :param bins: Will be passed on to the evaluator to create bins. See Evaluator.__create_bins_from_data()
+        :param log: Defines whether the histogram will be plotted in log or non log format.
+        :param density: Normalizes the area under the curve to unit area.
+        """
         to_plot = []
         for i in range(len(self.evals)):
             if i in self.real_data_indices:
@@ -1184,7 +1365,8 @@ class Bundle:
             for entry in to_plot:
                 print(entry[0][2])
                 _ = plt.hist([*entry[0][0], *entry[0][1]], bins=entry[0][2], histtype="bar",
-                             label=f"Prediction % for selected class of {self.evals[entry[1]].model_name}", alpha=0.5, log=log)
+                             label=f"Prediction % for selected class of {self.evals[entry[1]].model_name}",
+                             alpha=0.5, density=density, log=log)
                 plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fontsize=11)
 
                 plt.xlabel(f"Predicted probability of being of the selected class")

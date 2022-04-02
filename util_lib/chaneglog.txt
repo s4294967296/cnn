@@ -48,3 +48,71 @@
 ---------
 . Project-wide:
     -> Changed name to "CELFA - CNN Evaluation Library For ANNIE"
+---------
+02.04.22:
+---------
+. Project-wide:
+    -> I did not keep up with the changelog. :(
+. cnn_util_eval.py -> changed to celfa_eval.py
+    -> etc.
+. celfa_eval.py:
+    -> Added / changed documentation for the following:
+        . Evaluator() :
+            -> get_cm_entry()
+            -> select_stats_data_by_data_name()
+            -> select_stats_data_by_category()
+            -> __save_fig()
+            -> __create_bins_from_data()
+            -> get_auc()
+            -> plot_roc()
+            -> plot_percent_predicted()
+            -> plot_prediction_confidence()
+            -> plot_probability_histogram()
+            -> plot_confusion_matrix()
+            -> plot_histogram_real()
+            -> plot_histogram()
+        . Bundle():
+            -> plot_percent_predicted()
+            -> plot_prediction_accuracy()
+            -> plot_probability_histogram()
+    -> Modified behaviour:
+        . Evaluator():
+            . get_cm_entry():
+                -> Previously "print_cm_entry()"
+                -> Now returns instead of printing
+            . print_category_count(): formatting
+            . __create_bins_from_data:
+                -> changed logic slightly
+            . plot_roc():
+                -> changed curve label
+            . plot_percent_predicted():
+                -> changed plot title
+            . plot_prediction_confidence():
+                -> changed behaviour of type(category)==list branch,
+                    -> Will now call itself with every entry of category
+            . plot_probability_histogram():
+                -> changed plot title
+            . plot_confusion_matrix():
+                -> Selection of cmap is now by default "Blues"
+                -> cmap will change to "Purples" when absolute is true
+                -> title will change based upon value of absolute
+        . Bundle():
+            . plot_probability_histogram():
+                -> density parameter added to hist
+    -> Added features:
+        . Evaluator():
+            . plot_roc():
+                -> support changing title
+            . plot_percent_predicted():
+                -> support saving
+            . plot_prediction_confidence():
+                -> support returning data
+                -> support saving
+                -> support calling itself multiple times when providing a list of categories
+                -> support continuous/split style (kind of)
+                -> support changing the title
+            . plot_probability_histogram():
+                -> support saving
+            . plot_confusion_matrix:
+                -> Support changing xlbl and ylbl
+
