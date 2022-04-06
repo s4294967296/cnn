@@ -235,7 +235,10 @@ class Evaluator:
         else:
             self.test_data = np.array(celfa_data.select_data(self.__test_data_original, self.net_data_indices))
             if self.__reshape_data:
-                self.test_data = self.test_data.reshape((-1, 10, 16, len(self.net_data_indices)))
+                if len(self.net_data_indices) == 1:
+                    self.test_data = self.test_data.reshape((-1, 10, 16))
+                else:
+                    self.test_data = self.test_data.reshape((-1, 10, 16, len(self.net_data_indices)))
 
     def __create_stats_data(self) -> None:
         """Initialize stats_data from test_data selected by stats_data_indices."""
