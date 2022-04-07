@@ -546,14 +546,18 @@ def select_data(data, indices):
 
 # data set stuff
 def dataset_stats(data_names: List[str],
-                  path: str,
-                  label: str,
+                  path: str = None,
+                  label: str = None,
                   number_of_files: int = -1,
                   file_index_edges: List[int] = None,
-                  beam_mrd_coinc: bool = False):
+                  beam_mrd_coinc: bool = False,
+                  data=None):
     """TODO DOCSTR"""
-    data = construct_data_array(data_names, path, label, number_of_files=number_of_files,
-                                file_index_edges=file_index_edges, beam_mrd_coinc=beam_mrd_coinc)
+    if path is not None and label is not None:
+        data = construct_data_array(data_names, path, label, number_of_files=number_of_files,
+                                    file_index_edges=file_index_edges, beam_mrd_coinc=beam_mrd_coinc)
+    else:
+        data = data
 
     total_events = len(data)
     print("Total # of events: ", total_events)
