@@ -115,4 +115,14 @@
                 -> support saving
             . plot_confusion_matrix:
                 -> Support changing xlbl and ylbl
-
+---------
+12.04.22:
+---------
+. celfa_eval.py:
+    -> Added features:
+        . Evaluator():
+            . mrd_hist():
+                -> Plot histogram of mrd data
+                -> Choose which column of the data to plot
+            . mrd_accuracy():
+                -> Plot accuracy of identification vs mrd column data

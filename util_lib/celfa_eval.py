@@ -1319,6 +1319,71 @@ class Evaluator:
         plt.ylim(ylim)
         plt.show()
 
+    def mrd_hist(self,
+                 column: int,
+                 bins: Union[int, None] = None,
+                 category=None,
+
+                 title: Union[None, str] = None,
+                 xlim: tuple = None,
+                 ylim: tuple = None,
+                 xlbl: str = None,
+                 ylbl: str = None,
+
+                 return_data: bool = False,
+                 savefig: bool = False,
+                 file_format: str = "pdf",
+                 filename: str = None,
+                 **kwargs) -> Union[None, List]:
+        """TODO: DOCSTR"""
+        data = []
+        if "MRD" in self.stats_dict:
+            if category is None:
+                data = self.select_stats_data_by_data_name("MRD")
+            else:
+                data = self.select_stats_data_by_category(category)
+                data = self.select_stats_data_by_data_name("MRD", data=data)
+        elif "MRD" in self.data_dict:
+            print("Currently this functions only supports loading MRD data from stats data.")
+            return None
+        else:
+            return None
+
+        selected_column_data = [x[column] for x in data]
+
+        if return_data:
+            return selected_column_data
+
+        bins = self.__create_bins_from_data(bins, selected_column_data)
+
+        fig = plt.figure()
+        _ = plt.hist(selected_column_data, bins=bins, **kwargs)
+
+        if category is None:
+            category = "all categories"
+        if title is None:
+            plt.title(f"{self.model_name} - Histogram with {len(bins) - 1} bins. "
+                      f"\n Plotting MRD column {column} data for the category {category}.")
+        else:
+            plt.title(f"{title}")
+
+        plt.legend(loc='best', fontsize=11)
+
+        plt.xlabel(f"MRD entry {column}") if xlbl is None else plt.xlabel(xlbl)
+        plt.ylabel("Count") if ylbl is None else plt.ylabel(ylbl)
+
+        if xlim is not None:
+            plt.xlim(xlim)
+        if ylim is not None:
+            plt.ylim(ylim)
+
+        plt.show()
+
+        if savefig:
+            self.__save_fig(fig, file_format, filename)
+
+        return None
+
 
 class Bundle:
     def __init__(self, evals: List[Evaluator], real_data_indices=None):
