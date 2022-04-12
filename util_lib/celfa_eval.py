@@ -1103,6 +1103,7 @@ class Evaluator:
     def plot_accuracy(self,
                       data_name: str,
                       category: Union[str, list, None] = None,
+                      column: Union[int, None] = None,
                       bins: Union[str, int, list, None] = "auto",
                       title: str = None,
                       xlim: tuple = None,
@@ -1122,6 +1123,7 @@ class Evaluator:
         data points beyond the first and last bin border.
         :param plot_at_center_of_bins: If true, centers the data on centers of bins. In the process, the last data point
             is dropped.
+        :param column: Only applies to MRD data. Specifies which MRD data column will be selected.
         :param error_bars: Includes error bars. Using Clopper-Pearson interval based on beta distribution.
         :param equal_counts: If true, will attempt to build bins which contain the same number of events. Note that
             splitting data with the exact same values into multiple bins is not supported. Also note, that this only
@@ -1148,6 +1150,8 @@ class Evaluator:
         if category is None:
             data = self.stats_data
             selected_data = self.select_stats_data_by_data_name(data_name, data=data)
+            if data_name is "MRD":
+                selected_data = [x[column] for x in selected_data]
 
         elif type(category) is list:
             data_multiple, selected_data_multiple = [], []
@@ -1155,11 +1159,16 @@ class Evaluator:
                 data_multiple.append(0), selected_data_multiple.append(0)
                 data_multiple[i] = self.select_stats_data_by_category(category=category[i])
                 selected_data_multiple[i] = self.select_stats_data_by_data_name(data_name, data=data_multiple[i])
+                if data_name is "MRD":
+                    selected_data_multiple[i] = [x[column] for x in selected_data_multiple[i]]
             selected_data = selected_data_multiple
             data = data_multiple
+
         else:
             data = self.select_stats_data_by_category(category=category)
             selected_data = self.select_stats_data_by_data_name(data_name, data=data)
+            if data_name is "MRD":
+                selected_data = [x[column] for x in selected_data]
 
         if type(category) is list:
             bins = self.__create_bins_from_data(bins, selected_data[0], equal_counts=equal_counts)
