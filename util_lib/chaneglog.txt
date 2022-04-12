@@ -124,5 +124,3 @@
             . mrd_hist():
                 -> Plot histogram of mrd data
                 -> Choose which column of the data to plot
-            . mrd_accuracy():
-                -> Plot accuracy of identification vs mrd column data
