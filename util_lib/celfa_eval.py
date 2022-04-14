@@ -1037,13 +1037,13 @@ class Evaluator:
         """
         if type(category) is str:
             try:
-                _ = self.stats_data[category]
+                _ = self.select_stats_data_by_category(category)
             except KeyError:
                 return None
         if type(category) is list:
             for _ in category:
                 try:
-                    _ = self.stats_data[category]
+                    _ = self.select_stats_data_by_category(_)
                 except KeyError:
                     return None
         if self.real_test_data:
