@@ -1150,7 +1150,7 @@ class Evaluator:
         if category is None:
             data = self.stats_data
             selected_data = self.select_stats_data_by_data_name(data_name, data=data)
-            if data_name is "MRD":
+            if data_name == "MRD":
                 selected_data = [x[column] for x in selected_data]
 
         elif type(category) is list:
@@ -1159,7 +1159,7 @@ class Evaluator:
                 data_multiple.append(0), selected_data_multiple.append(0)
                 data_multiple[i] = self.select_stats_data_by_category(category=category[i])
                 selected_data_multiple[i] = self.select_stats_data_by_data_name(data_name, data=data_multiple[i])
-                if data_name is "MRD":
+                if data_name == "MRD":
                     selected_data_multiple[i] = [x[column] for x in selected_data_multiple[i]]
             selected_data = selected_data_multiple
             data = data_multiple
@@ -1167,7 +1167,7 @@ class Evaluator:
         else:
             data = self.select_stats_data_by_category(category=category)
             selected_data = self.select_stats_data_by_data_name(data_name, data=data)
-            if data_name is "MRD":
+            if data_name == "MRD":
                 selected_data = [x[column] for x in selected_data]
 
         if type(category) is list:
