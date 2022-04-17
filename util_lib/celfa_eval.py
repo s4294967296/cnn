@@ -54,8 +54,6 @@ class Evaluator:
                  model_path: str = None,
                  model=None,
                  model_name: str = None,
-                 train_data: list = None,
-                 train_cat_values: list = None,
                  test_data: list = None,
                  test_cat_values: list = None,
                  net_data_indices: list = None,
@@ -65,7 +63,8 @@ class Evaluator:
                  mute_tf_info: bool = True,
                  real_test_data: bool = False,
                  reshape_data: bool = False,
-                 mode: str = "em") -> None:
+                 mode: str = "em",
+                 expdata: celfa_data.ExperimentalData = None) -> None:
         """
         Used for high-level evaluation and presentation of data, meant as an easy way to evaluate model performance.
         Requires at least model_path. The model will be loaded into self.model as a keras.model. To access plotting
@@ -111,10 +110,7 @@ class Evaluator:
             model. This includes one-dimensional data which has not been used for training, e.g. "VisualEnergy", but not
             data like "Charge" or "Time". The Evaluator will access data when calling methods by using the keys defined
             in data_dict. See the example in the docstring.
-        :param train_cat_values: See test_cat_values, but for data from training.
         :param test_cat_values: Array or list of true category values of test data.
-        :param train_data: Data with which the model has been trained. The Evaluator expects a tuple of the shape
-            (data, category values).
         :param data_dict: Dictionary which documents the structure of the data provided in test_data. Keys are data
             types like "VisibleEnergy" or "Charge" etc. Further functionality of the Evaluator Class is accessed by
             using these keywords.
@@ -139,14 +135,13 @@ class Evaluator:
         self.data_dict = data_dict
         self.model_path = model_path
         self.model_name = model_name
-        self.train_data = train_data
-        self.train_category_values = train_cat_values
         self.__test_data_original = test_data
         self.test_category_values = test_cat_values
         self.category_values_dict = cat_values_dict
         self.net_data_indices = net_data_indices
         self.stats_data_indices = stats_data_indices
         self.mode = mode
+        self.expdata = expdata
 
         # Instantiated for other methods.
         #
@@ -205,29 +200,40 @@ class Evaluator:
         Initialize 'self.stats_dict' from 'self.stats_data_indices'. This translates the indices from test_data to the
         ordering of stats_data.
         """
-        if self.stats_dict is None:
-            pass
-        else:
-            i = 0
-            for key in self.data_dict:
-                if self.data_dict[key] in self.stats_data_indices:
-                    self.stats_dict[key] = i
-                    i += 1
+        if self.stats_dict == {}:
+            if type(self.expdata) == celfa_data.ExperimentalData:
+                i = 0
+                for key in self.expdata.data_dict:
+                    if self.expdata.data_dict[key] in self.expdata.stats_data_indices:
+                        self.stats_dict[key] = i
+                        i += 1
+            else:
+                i = 0
+                for key in self.data_dict:
+                    if self.data_dict[key] in self.stats_data_indices:
+                        self.stats_dict[key] = i
+                        i += 1
 
     def __create_test_data(self) -> None:
         """Initialize test_data from test_data selected by net_data_indices."""
         if self.real_test_data:
-            s_data = []
 
-            for i in range(len(self.__test_data_original)):
-                temp = []
-                for index in self.net_data_indices:
-                    temp.append(self.__test_data_original[i][index])
-                s_data.append(temp)
-            if self.__reshape_data:
-                self.test_data = (np.array(s_data)).reshape((-1, 10, 16, len(self.net_data_indices)))
+            if type(self.expdata) == celfa_data.ExperimentalData:
+                self.test_data = np.array(celfa_data.select_data(self.expdata.data, self.expdata.net_data_indices))
+                # TODO: Adapt for multiple data inputs
+                self.test_data = self.test_data.reshape(-1, *self.test_data.shape[2:])
             else:
-                self.test_data = np.array(s_data)
+                s_data = []
+
+                for i in range(len(self.__test_data_original)):
+                    temp = []
+                    for index in self.net_data_indices:
+                        temp.append(self.__test_data_original[i][index])
+                    s_data.append(temp)
+                if self.__reshape_data:
+                    self.test_data = (np.array(s_data)).reshape((-1, 10, 16, len(self.net_data_indices)))
+                else:
+                    self.test_data = np.array(s_data)
 
         else:
             self.test_data = np.array(celfa_data.select_data(self.__test_data_original, self.net_data_indices))
@@ -238,15 +244,19 @@ class Evaluator:
         """Initialize stats_data from test_data selected by stats_data_indices."""
         if self.stats_dict is None:
             return
-        if self.real_test_data:
-            s_data = []
 
-            for i in range(len(self.__test_data_original)):
-                temp = []
-                for index in self.stats_data_indices:
-                    temp.append(self.__test_data_original[i][index])
-                s_data.append(temp)
-            self.stats_data = s_data
+        if self.real_test_data:
+            if self.expdata is None:
+                s_data = []
+
+                for i in range(len(self.__test_data_original)):
+                    temp = []
+                    for index in self.stats_data_indices:
+                        temp.append(self.__test_data_original[i][index])
+                    s_data.append(temp)
+                self.stats_data = s_data
+            else:
+                self.stats_data = celfa_data.select_data(self.expdata.data, self.expdata.stats_data_indices)
         else:
             self.stats_data = celfa_data.select_data(self.__test_data_original, self.stats_data_indices)
 
