@@ -545,6 +545,32 @@ def select_data(data, indices):
     return s_data
 
 
+def reshape_data_entry(data, index, shape):
+    """Select a data type from data and reshape using np.reshape()"""
+    selected_data = np.array(select_data(data, [index])).reshape(shape)
+    new_shaped_data = []
+
+    if index == 0:
+        all_except_first_data = select_data(data, [r for r in range(index + 1, len(data[0]))])
+        for i in range(0, len(selected_data)):
+            j = [selected_data[i], *(all_except_first_data[i])]
+            new_shaped_data.append(j)
+
+    elif index == (len(data[0]) - 1):
+        all_except_last_data = select_data(data, [r for r in range(0, len(data[0]) - 1)])
+        for i in range(0, len(selected_data)):
+            j = [*(all_except_last_data[i]), selected_data[i]]
+            new_shaped_data.append(j)
+
+    else:
+        all_up_to_index_data = select_data(data, [r for r in range(0, index)])
+        all_after_index_data = select_data(data, [r for r in range(index + 1, len(data[0]))])
+        for i in range(0, len(selected_data)):
+            j = [*(all_up_to_index_data[i]), selected_data[i], *(all_after_index_data[i])]
+            new_shaped_data.append(j)
+
+    return new_shaped_data
+
 # data set stuff
 def dataset_stats(data_names: List[str],
                   path: str = None,
