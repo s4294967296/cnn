@@ -5,6 +5,7 @@ import configparser
 import pickle
 import pathlib
 import random
+from dataclasses import dataclass
 
 # 3rd party
 import numpy as np
@@ -656,3 +657,30 @@ def dataset_stats(data_names: List[str],
 
             print("Average neutron count: ", neutron_count_average)
             print("Median neutron count: ", neutron_count_median)
+
+
+@dataclass
+class ExperimentalData:
+    """Wrapper for loaded experimental data.
+
+    data is a list of lists, which contain the different data types.
+    data_dict is of the form {"charge": 1, "MRD": 2}, and contains information about retrieval of data.
+    stats_data_indices uses the same mapping defined in data_dict, and indicates which of the data is loaded only for
+        statistical purposes (the model has not been trained which this data), e.g. "VisibleEnergy", "Rings"
+    net_data_indices: see stats_data_indices. The difference being, that these indices define the data with which the
+        model has been trained. E.g. "charge" and "MRD"
+    """
+    net_data_indices: List[int]
+    stats_data_indices: List[int]
+    data_dict: dict
+    data: List[np.array]
+
+
+@dataclass
+class SimulationData(ExperimentalData):
+    """Wrapper for loaded simulation data, inherits from ExperimentalData
+
+    category_values is just a list of category values corresponding to the loaded data.
+    """
+    category_values: List
+    cat_values_dict: dict
