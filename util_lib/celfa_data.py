@@ -696,11 +696,16 @@ class ExperimentalData:
         statistical purposes (the model has not been trained which this data), e.g. "VisibleEnergy", "Rings"
     net_data_indices: see stats_data_indices. The difference being, that these indices define the data with which the
         model has been trained. E.g. "charge" and "MRD"
+    input_layers: dictionary which describes the model's input layers. This describes which data is loaded; data also
+        needs to have same name as described in data_dict. Compare evaluating a functional model:
+            fun.evaluate({"mrd": data_mrd, "charge": data_charge}, y)
+        The input layers of the model also need to carry the same name / identifier.
     """
     net_data_indices: List[int]
     stats_data_indices: List[int]
     data_dict: dict
     data: List[np.array]
+    input_layers: dict
 
 
 @dataclass

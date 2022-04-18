@@ -127,11 +127,16 @@ class Evaluator:
         :param reshape_data: Specify if data is to be reshaped.
         """
 
+        # TODO: TREAT THIS AS TENTATIVE
+        if expdata:
+            self.real_test_data = True
+        else:
+            self.real_test_data = real_test_data
+
         if mute_tf_info:
             os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
         # instantiated by call to __init__():
-        self.real_test_data = real_test_data
         self.data_dict = data_dict
         self.model_path = model_path
         self.model_name = model_name
@@ -149,16 +154,11 @@ class Evaluator:
         # is changed. Consider moving the functionality of this operation to method, for better readability and
         # overview. __test_data_original needs to exist this way since for example stats_data depends on the original
         # shape of test_data. Might be a poor design decision, who knows.
-        if real_test_data:
-            pass
-        else:
+        if not self.real_test_data:
             self.__test_data_original, self.test_category_values = celfa_data.split_data_cat(self.__test_data_original)
             self.test_category_values = np.array(self.test_category_values)
 
-        if stats_data_indices is None:
-            self.stats_dict = None
-        else:
-            self.stats_dict = {}
+        self.stats_dict = {}
         self.stats_data = None
 
         self.unique_categories = None
@@ -200,26 +200,32 @@ class Evaluator:
         Initialize 'self.stats_dict' from 'self.stats_data_indices'. This translates the indices from test_data to the
         ordering of stats_data.
         """
-        if self.stats_dict == {}:
-            if type(self.expdata) == celfa_data.ExperimentalData:
-                i = 0
-                for key in self.expdata.data_dict:
-                    if self.expdata.data_dict[key] in self.expdata.stats_data_indices:
-                        self.stats_dict[key] = i
-                        i += 1
-            else:
-                i = 0
-                for key in self.data_dict:
-                    if self.data_dict[key] in self.stats_data_indices:
-                        self.stats_dict[key] = i
-                        i += 1
+        if type(self.expdata) == celfa_data.ExperimentalData:
+            i = 0
+            for key in self.expdata.data_dict:
+                if self.expdata.data_dict[key] in self.expdata.stats_data_indices:
+                    self.stats_dict[key] = i
+                    i += 1
+        else:
+            i = 0
+            for key in self.data_dict:
+                if self.data_dict[key] in self.stats_data_indices:
+                    self.stats_dict[key] = i
+                    i += 1
 
     def __create_test_data(self) -> None:
         """Initialize test_data from test_data selected by net_data_indices."""
         if self.real_test_data:
 
             if type(self.expdata) == celfa_data.ExperimentalData:
-                self.test_data = np.array(celfa_data.select_data(self.expdata.data, self.expdata.net_data_indices))
+                if self.expdata.input_layers:
+                    test_data_dict = {}
+                    for key in self.expdata.input_layers:
+                        test_data_dict[key] = np.array(
+                            celfa_data.select_data(self.expdata.data, self.expdata.data_dict[key]))
+                    self.test_data = test_data_dict
+                else:
+                    self.test_data = np.array(celfa_data.select_data(self.expdata.data, self.expdata.net_data_indices))
                 # TODO: Adapt for multiple data inputs
                 self.test_data = self.test_data.reshape(-1, *self.test_data.shape[2:])
             else:
@@ -242,8 +248,8 @@ class Evaluator:
 
     def __create_stats_data(self) -> None:
         """Initialize stats_data from test_data selected by stats_data_indices."""
-        if self.stats_dict is None:
-            return
+        #if self.stats_dict is None:
+        #    return
 
         if self.real_test_data:
             if self.expdata is None:
@@ -281,12 +287,14 @@ class Evaluator:
         # whatever you do, do not change the order of zip's. This WILL break all methods dependent on self.stats_data,
         # since the order is crucial.
         if self.real_test_data:
+            print("join pred i got called real test data")
             if self.stats_dict is None:
                 list(zip([0 for _ in range(len(self.__predicted_category_values))],
                          [0 for _ in range(len(self.__predicted_category_values))],
                          self.y_prob,
                          self.__predicted_category_values))
             else:
+                print("join pred i got called")
                 self.stats_data = list(zip(self.stats_data,
                                            [0 for _ in range(len(self.__predicted_category_values))],
                                            self.y_prob,
@@ -305,7 +313,10 @@ class Evaluator:
 
     def __calculate_y_prob(self) -> None:
         """Calculate the classification probability for each test_data entry."""
-        self.y_prob = np.array(self.model.predict(self.test_data, batch_size=100, verbose=0))
+        if self.expdata:
+            self.y_prob = np.array(self.model.predict(self.test_data, batch_size=100, verbose=0))
+        else:
+            self.y_prob = np.array(self.model.predict(self.test_data, batch_size=100, verbose=0))
 
     def __calculate_efficiency_accuracy_purity_count_categories_cm(self) -> None:
         """
@@ -804,6 +815,10 @@ class Evaluator:
         selected_data = self.stats_data
         selected_class_predictions = self.select_predicted_classes(selected_data)
         selected_category_value_predictions = self.select_predicted_category_values(selected_data)
+
+        print(selected_data[0])
+        print(selected_class_predictions[0])
+        print(selected_category_value_predictions[0])
 
         bins = self.__create_bins_from_data(bins, [0.0, 1.1])
         fig = plt.figure()
