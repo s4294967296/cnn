@@ -15,13 +15,13 @@ import configparser
 
 ########################################################################################################################
 #
-# Exceptions concerning data and data handling
+# Exceptions concerning data_container and data_container handling
 #
 ########################################################################################################################
 
 
 class ErrorMismatch(Exception):
-    """Raised when a process depends on two separate data files with the same index, but not both could be loaded"""
+    """Raised when a process depends on two separate data_container files with the same index, but not both could be loaded"""
     pass
 
 

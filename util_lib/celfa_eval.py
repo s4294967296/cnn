@@ -64,9 +64,9 @@ class Evaluator:
                  real_test_data: bool = False,
                  reshape_data: bool = False,
                  mode: str = "em",
-                 expdata: celfa_data.ExperimentalData = None) -> None:
+                 data_container: Union[celfa_data.ExperimentalData, celfa_data.SimulationData] = None) -> None:
         """
-        Used for high-level evaluation and presentation of data, meant as an easy way to evaluate model performance.
+        Used for high-level evaluation and presentation of data_container, meant as an easy way to evaluate model performance.
         Requires at least model_path. The model will be loaded into self.model as a keras.model. To access plotting
         functionality, data_dict and stats_data_indices needs to be provided.
         ----------------------------------------------------------------------------------------------------------------
@@ -78,11 +78,11 @@ class Evaluator:
                        stats_data_indices=[2, 3],
                        cat_values_dict={"Electron": [1, 0], "Muon": [0, 1]},
                        data_dict={"Charge": 0, "Time": 1, "Energy": 2, "VisibleEnergy": 3})
-        In this example. Charge and time data has been used for training (net_data_indices=[0,1]) and "Energy" as well
+        In this example. Charge and time data_container has been used for training (net_data_indices=[0,1]) and "Energy" as well
         as "VisibleEnergy" will be used by the Evaluator to plot histograms, prediction accuracy vs "Energy"
-        or "VisibleEnergy" etc. data_dict defines the keys by which data will be accessed. For example,
+        or "VisibleEnergy" etc. data_dict defines the keys by which data_container will be accessed. For example,
         ev.plot_histogram("VisibleEnergy")
-        will plot a histogram of the data located at position data_dict["VisibleEnergy"] = 3 of the data given in
+        will plot a histogram of the data_container located at position data_dict["VisibleEnergy"] = 3 of the data_container given in
         test_data.
         ----------------------------------------------------------------------------------------------------------------
         Some other basic examples:
@@ -105,31 +105,33 @@ class Evaluator:
         :param mute_tf_info: If set to true, disable printing of tf info.
         :param model_name: Name of the model
         :param test_data: Data with which the model shall be evaluated. The Evaluator expects a tuple of the shape
-            (data, category values).
-        :param stats_data_indices: Requires a list of indices which correspond to what data will be used to evaluate the
-            model. This includes one-dimensional data which has not been used for training, e.g. "VisualEnergy", but not
-            data like "Charge" or "Time". The Evaluator will access data when calling methods by using the keys defined
+            (data_container, category values).
+        :param stats_data_indices: Requires a list of indices which correspond to what data_container will be used to evaluate the
+            model. This includes one-dimensional data_container which has not been used for training, e.g. "VisualEnergy", but not
+            data_container like "Charge" or "Time". The Evaluator will access data_container when calling methods by using the keys defined
             in data_dict. See the example in the docstring.
-        :param test_cat_values: Array or list of true category values of test data.
-        :param data_dict: Dictionary which documents the structure of the data provided in test_data. Keys are data
+        :param test_cat_values: Array or list of true category values of test data_container.
+        :param data_dict: Dictionary which documents the structure of the data_container provided in test_data. Keys are data_container
             types like "VisibleEnergy" or "Charge" etc. Further functionality of the Evaluator Class is accessed by
             using these keywords.
-        :param net_data_indices: Include a list of indices of which parts of the data have been used to train the net.
-            For example: If training has been done using charge and time data, but the data provided is
+        :param net_data_indices: Include a list of indices of which parts of the data_container have been used to train the net.
+            For example: If training has been done using charge and time data_container, but the data_container provided is
             [charge, time, EnergyMuon], then setting 'net_data_indices = [0, 1]' will tell the Evaluator that the net
-            has been only trained with charge and time data.
-        :param net_data_indices: Same as 'net_data_indices', but for all the data that has not been given to train the
+            has been only trained with charge and time data_container.
+        :param net_data_indices: Same as 'net_data_indices', but for all the data_container that has not been given to train the
             net. For example: EnergyMuon -> for histograms only.
         :param cat_values_dict: A dictionary which translates category value tuples of the form (0, 1) etc. to
             human-readable identifiers such as "Electron". Default = None.
         :param model_path: full path.
-        :param real_test_data: Set to true if the network is used on new, real data, without category values.
-        :param reshape_data: Specify if data is to be reshaped.
+        :param real_test_data: Set to true if the network is used on new, real data_container, without category values.
+        :param reshape_data: Specify if data_container is to be reshaped.
         """
 
         # TODO: TREAT THIS AS TENTATIVE
-        if expdata:
+        if type(data_container) == celfa_data.ExperimentalData:
             self.real_test_data = True
+        elif type(data_container) == celfa_data.SimulationData:
+            self.real_test_data = False
         else:
             self.real_test_data = real_test_data
 
@@ -146,7 +148,7 @@ class Evaluator:
         self.net_data_indices = net_data_indices
         self.stats_data_indices = stats_data_indices
         self.mode = mode
-        self.expdata = expdata
+        self.data_container = data_container
 
         # Instantiated for other methods.
         #
@@ -155,8 +157,11 @@ class Evaluator:
         # overview. __test_data_original needs to exist this way since for example stats_data depends on the original
         # shape of test_data. Might be a poor design decision, who knows.
         if not self.real_test_data:
-            self.__test_data_original, self.test_category_values = celfa_data.split_data_cat(self.__test_data_original)
-            self.test_category_values = np.array(self.test_category_values)
+            if type(self.data_container) == celfa_data.SimulationData:
+                self.test_category_values = np.array(data_container.category_values)
+            else:
+                self.__test_data_original, self.test_category_values = celfa_data.split_data_cat(self.__test_data_original)
+                self.test_category_values = np.array(self.test_category_values)
 
         self.stats_dict = {}
         self.stats_data = None
@@ -182,7 +187,7 @@ class Evaluator:
             self.model = model
         self.predicted = None
 
-        # Calculation of parameters and statistics, and preparation of data
+        # Calculation of parameters and statistics, and preparation of data_container
         self.__create_stats_dict()
         self.__create_test_data()
         self.__create_stats_data()
@@ -200,10 +205,10 @@ class Evaluator:
         Initialize 'self.stats_dict' from 'self.stats_data_indices'. This translates the indices from test_data to the
         ordering of stats_data.
         """
-        if type(self.expdata) == celfa_data.ExperimentalData:
+        if self.data_container:
             i = 0
-            for key in self.expdata.data_dict:
-                if self.expdata.data_dict[key] in self.expdata.stats_data_indices:
+            for key in self.data_container.data_dict:
+                if self.data_container.data_dict[key] in self.data_container.stats_data_indices:
                     self.stats_dict[key] = i
                     i += 1
         else:
@@ -217,17 +222,22 @@ class Evaluator:
         """Initialize test_data from test_data selected by net_data_indices."""
         if self.real_test_data:
 
-            if type(self.expdata) == celfa_data.ExperimentalData:
-                if self.expdata.input_layers:
+            if type(self.data_container) == celfa_data.ExperimentalData \
+                    or type(self.data_container) == celfa_data.SimulationData:
+                if self.data_container.input_layers:
                     test_data_dict = {}
-                    for key in self.expdata.input_layers:
-                        test_data_dict[key] = np.array(
-                            celfa_data.select_data(self.expdata.data, self.expdata.data_dict[key]))
+                    for key in self.data_container.input_layers:
+                        test_data_dict[key] = np.array([*celfa_data.select_data(self.data_container.data,
+                                                                                [self.data_container.data_dict[key]])])
+                        print(np.shape(test_data_dict[key]))
+                        test_data_dict[key] = test_data_dict[key].reshape(self.data_container.input_layers[key])
+                        print(np.shape(test_data_dict[key]))
                     self.test_data = test_data_dict
                 else:
-                    self.test_data = np.array(celfa_data.select_data(self.expdata.data, self.expdata.net_data_indices))
-                # TODO: Adapt for multiple data inputs
-                self.test_data = self.test_data.reshape(-1, *self.test_data.shape[2:])
+                    self.test_data = np.array(celfa_data.select_data(self.data_container.data, self.data_container.net_data_indices))
+                    # TODO: Adapt for multiple data_container inputs
+                    self.test_data = self.test_data.reshape(-1, *self.test_data.shape[2:])
+
             else:
                 s_data = []
 
@@ -248,11 +258,11 @@ class Evaluator:
 
     def __create_stats_data(self) -> None:
         """Initialize stats_data from test_data selected by stats_data_indices."""
-        #if self.stats_dict is None:
+        # if self.stats_dict is None:
         #    return
 
         if self.real_test_data:
-            if self.expdata is None:
+            if self.data_container is None:
                 s_data = []
 
                 for i in range(len(self.__test_data_original)):
@@ -262,12 +272,12 @@ class Evaluator:
                     s_data.append(temp)
                 self.stats_data = s_data
             else:
-                self.stats_data = celfa_data.select_data(self.expdata.data, self.expdata.stats_data_indices)
+                self.stats_data = celfa_data.select_data(self.data_container.data, self.data_container.stats_data_indices)
         else:
             self.stats_data = celfa_data.select_data(self.__test_data_original, self.stats_data_indices)
 
     def __create_predicted_category_values(self) -> None:
-        """Create predicted category values based on network prediction of test data. This needs to be adapted for
+        """Create predicted category values based on network prediction of test data_container. This needs to be adapted for
         different network outputs."""
         if self.mode == "em":
             for i in range(len(self.y_prob)):
@@ -283,18 +293,16 @@ class Evaluator:
                     self.__predicted_category_values.append(self.category_values_dict["SR"])
 
     def __join_predicted_and_category_values_and_stats_data(self) -> None:
-        """Take predicted category values, and zip it to only the data."""
+        """Take predicted category values, and zip it to only the data_container."""
         # whatever you do, do not change the order of zip's. This WILL break all methods dependent on self.stats_data,
         # since the order is crucial.
         if self.real_test_data:
-            print("join pred i got called real test data")
             if self.stats_dict is None:
                 list(zip([0 for _ in range(len(self.__predicted_category_values))],
                          [0 for _ in range(len(self.__predicted_category_values))],
                          self.y_prob,
                          self.__predicted_category_values))
             else:
-                print("join pred i got called")
                 self.stats_data = list(zip(self.stats_data,
                                            [0 for _ in range(len(self.__predicted_category_values))],
                                            self.y_prob,
@@ -313,7 +321,7 @@ class Evaluator:
 
     def __calculate_y_prob(self) -> None:
         """Calculate the classification probability for each test_data entry."""
-        if self.expdata:
+        if self.data_container:
             self.y_prob = np.array(self.model.predict(self.test_data, batch_size=100, verbose=0))
         else:
             self.y_prob = np.array(self.model.predict(self.test_data, batch_size=100, verbose=0))
@@ -365,15 +373,15 @@ class Evaluator:
                                        category: str = None,
                                        data=None) -> list:
         """
-        Return list of data from self.stats_data, given one of the categories defined when creating the Evaluator
-        (self.category_values_dict). Return only data specified by data_name.
+        Return list of data_container from self.stats_data, given one of the categories defined when creating the Evaluator
+        (self.category_values_dict). Return only data_container specified by data_name.
 
-        :param data_name: Name of the data which will be selected. Requires the same identifier as defined in data_dict
+        :param data_name: Name of the data_container which will be selected. Requires the same identifier as defined in data_dict
             upon class instantiation.
-        :param category: Which category will be selected from the data provided (e.g. "Electron"). If none is provided,
-            all data (data_name) will be selected.
+        :param category: Which category will be selected from the data_container provided (e.g. "Electron"). If none is provided,
+            all data_container (data_name) will be selected.
         :param data: Data from which will be selected.
-        :return: list of the selected data.
+        :return: list of the selected data_container.
         """
         temp_data_var = self.stats_data if data is None else data
         tdata = []
@@ -382,7 +390,7 @@ class Evaluator:
                 tdata = [x[self.stats_dict[data_name]] for x in temp_data_var]
             else:
                 tdata = [x[0][self.stats_dict[data_name]] for x in temp_data_var]
-            # This simply flattens data
+            # This simply flattens data_container
         else:
             for entry in temp_data_var:
                 t = True
@@ -426,13 +434,13 @@ class Evaluator:
 
     @staticmethod
     def select_predicted_classes(data: list):
-        """Extract the original (floating point) predictions of the model from data in the form of stats_data."""
+        """Extract the original (floating point) predictions of the model from data_container in the form of stats_data."""
         data = [event[2] for event in data]
         return data
 
     @staticmethod
     def select_predicted_category_values(data: list):
-        """Extract the category value predictions of the model from data in the form of stats_data."""
+        """Extract the category value predictions of the model from data_container in the form of stats_data."""
         data = [event[3] for event in data]
         return data
 
@@ -453,7 +461,7 @@ class Evaluator:
 
     def evaluate_model(self, verbose=False):
         """
-        Score the model on provided test data. Use verbose = True to print stats about score.
+        Score the model on provided test data_container. Use verbose = True to print stats about score.
 
         :param verbose: The verbosity parameter will be passed to keras.model.evaluate().
         """
@@ -469,14 +477,14 @@ class Evaluator:
                                 data: list,
                                 equal_counts: bool = False) -> list:
         """
-        Create bins, specified by 'bins' and data.
+        Create bins, specified by 'bins' and data_container.
 
         :param bins: Accepts an array-like object to specify bin cutoffs, an int for evenly spaced bins between
-            the min and max value of the data provided, or the string "auto", for 100 evenly spaced bins. Omitting will
+            the min and max value of the data_container provided, or the string "auto", for 100 evenly spaced bins. Omitting will
             default to auto.
         :param data: Data which will be used for bin bounds.
         :param equal_counts: If true, will attempt to build bins which contain the same number of events. Note that
-            splitting data with the exact same values into multiple bins is not supported.
+            splitting data_container with the exact same values into multiple bins is not supported.
         :return: list of bins.
         """
         if (type(bins) == int or bins == "auto" or bins is None) and not equal_counts:
@@ -591,7 +599,7 @@ class Evaluator:
         """
         Plots predicted count / total count per bin vs. data_name.
 
-        :param data_name: Name of the data which will be plotted. Requires the same identifier as defined in data_dict
+        :param data_name: Name of the data_container which will be plotted. Requires the same identifier as defined in data_dict
             upon class instantiation.
         :param bins: Pass 'auto', a positive int, a list of bins, or None (auto). Bins will be constructed in
             __create_bins_from_data.
@@ -606,7 +614,7 @@ class Evaluator:
         :param ylbl: Text for y-axis label. If none is provided, the label will be generated based on the provided
             parameters.
 
-        :param return_data: If true, return data instead of plotting. The returned data is of the form
+        :param return_data: If true, return data_container instead of plotting. The returned data_container is of the form
             [bins, percent_predicted_per_bin].
         :param savefig: Save figure?
         :param file_format: Format of the saved figure. Default (provided by self.__save_fig()) is 'pdf'.
@@ -614,7 +622,7 @@ class Evaluator:
 
         :param kwargs: Will be passed directly to plt.plot(), for valid arguments see documentation of
              matplotlib.pyplot.plot().
-        :return: None(shows plot), or data.
+        :return: None(shows plot), or data_container.
         """
         fig = plt.figure()
         data = self.stats_data
@@ -696,14 +704,14 @@ class Evaluator:
         :param ylbl: Text for y-axis label. If none is provided, the label will be generated based on the provided
             parameters.
 
-        :param return_data: If true, return data instead of plotting. The returned data is of the form
+        :param return_data: If true, return data_container instead of plotting. The returned data_container is of the form
             [bins, correctly_classified_probabilities, incorrectly_classified_probabilities].
         :param savefig: Save figure?
         :param file_format: Format of the saved figure. Default (provided by self.__save_fig()) is 'pdf'.
         :param filename: Filename of the saved figure.
 
         :param kwargs: will be passed to plt.hist().
-        :return: None, or data. See param return_data.
+        :return: None, or data_container. See param return_data.
         """
         if category is None:
             raise celfa_exceptions.ErrorParameter
@@ -799,14 +807,14 @@ class Evaluator:
         :param ylbl: Text for y-axis label. If none is provided, the label will be generated based on the provided
             parameters.
 
-        :param return_data: If true, return data instead of plotting. The returned data is of the form
+        :param return_data: If true, return data_container instead of plotting. The returned data_container is of the form
             [bins, correctly_classified_probabilities, incorrectly_classified_probabilities].
         :param savefig: Save figure?
         :param file_format: Format of the saved figure. Default (provided by self.__save_fig()) is 'pdf'.
         :param filename: Filename of the saved figure.
 
         :param kwargs: will be passed to plt.hist().
-        :return: None, or data. See param return_data.
+        :return: None, or data_container. See param return_data.
         """
 
         if category is None:
@@ -959,7 +967,7 @@ class Evaluator:
                               file_format: str = None,
                               **kwargs) -> None:
         """
-        Plot a histogram (number of counts vs data).
+        Plot a histogram (number of counts vs data_container).
 
         :param ylbl: Text for y-axis label.
         :param xlbl: Text for x-axis label.
@@ -967,14 +975,14 @@ class Evaluator:
         :param savefig: Save figure?
         :param filename: Filename of the saved figure.
         :param equal_counts: If true, will attempt to build bins which contain the same number of events. Note that
-            splitting data with the exact same values into multiple bins is not supported. Also note, that this only
+            splitting data_container with the exact same values into multiple bins is not supported. Also note, that this only
             applies if type(bins) = int. See also self.__create_bins_from_data()
         :param xlim: Limits of the x-axis. Accepts tuple or similar.
         :param ylim: Limits of the y-axis. Accepts tuple or similar.
-        :param data_name: Name of the data which will be plotted. Requires the same identifier as defined in data_dict
+        :param data_name: Name of the data_container which will be plotted. Requires the same identifier as defined in data_dict
             upon class instantiation.
         :param bins: Accepts an array-like object to specify bin cutoffs, an int for evenly spaced bins between
-            the min and max value of the data provided, or the string "auto", for 100 evenly spaced bins. Omitting will
+            the min and max value of the data_container provided, or the string "auto", for 100 evenly spaced bins. Omitting will
             default to auto.
         :param title: Title of the plot. If none is provided, the title will be generated based on the provided
             parameters.
@@ -992,7 +1000,7 @@ class Evaluator:
 
         bins = self.__create_bins_from_data(bins, data, equal_counts=equal_counts)
 
-        _ = plt.hist(data, bins=bins, histtype=histtype, label="All data", **kwargs)
+        _ = plt.hist(data, bins=bins, histtype=histtype, label="All data_container", **kwargs)
 
         if title is None:
             plt.title(f"{self.model_name} - Histogram with {len(bins) - 1} bins. "
@@ -1031,7 +1039,7 @@ class Evaluator:
                        file_format: str = None,
                        **kwargs) -> None:
         """
-        Plot a histogram (number of counts vs data).
+        Plot a histogram (number of counts vs data_container).
 
         :param ylbl: Text for y-axis label.
         :param xlbl: Text for x-axis label.
@@ -1039,17 +1047,17 @@ class Evaluator:
         :param savefig: Save figure?
         :param filename: Filename of the saved figure.
         :param equal_counts: If true, will attempt to build bins which contain the same number of events. Note that
-            splitting data with the exact same values into multiple bins is not supported. Also note, that this only
+            splitting data_container with the exact same values into multiple bins is not supported. Also note, that this only
             applies if type(bins) = int. See also self.__create_bins_from_data()
         :param xlim: Limits of the x-axis. Accepts tuple or similar.
         :param ylim: Limits of the y-axis. Accepts tuple or similar.
-        :param data_name: Name of the data which will be plotted. Requires the same identifier as defined in data_dict
+        :param data_name: Name of the data_container which will be plotted. Requires the same identifier as defined in data_dict
             upon class instantiation.
         :param bins: Accepts an array-like object to specify bin cutoffs, an int for evenly spaced bins between
-            the min and max value of the data provided, or the string "auto", for 100 evenly spaced bins. Omitting will
+            the min and max value of the data_container provided, or the string "auto", for 100 evenly spaced bins. Omitting will
             default to auto.
-        :param category: Which category will be selected from the data provided (e.g. "Electron"). If none is provided,
-            all data will be selected. If a list of categories is provided, multiple histograms in the same plot will
+        :param category: Which category will be selected from the data_container provided (e.g. "Electron"). If none is provided,
+            all data_container will be selected. If a list of categories is provided, multiple histograms in the same plot will
             be created.
         :param title: Title of the plot. If none is provided, the title will be generated based on the provided
             parameters.
@@ -1140,26 +1148,26 @@ class Evaluator:
                       plot_at_center_of_bins: bool = True,
                       **kwargs) -> None:
         """
-        Plot model accuracy (accuracy vs data).
+        Plot model accuracy (accuracy vs data_container).
         ----------------------------------------------------------------------------------------------------------------
         Note:
         -----
         Data points beyond - if provided - xlim are automatically dropped; if no xlim has been provided, discounts all
-        data points beyond the first and last bin border.
-        :param plot_at_center_of_bins: If true, centers the data on centers of bins. In the process, the last data point
+        data_container points beyond the first and last bin border.
+        :param plot_at_center_of_bins: If true, centers the data_container on centers of bins. In the process, the last data_container point
             is dropped.
-        :param column: Only applies to MRD data. Specifies which MRD data column will be selected.
+        :param column: Only applies to MRD data_container. Specifies which MRD data_container column will be selected.
         :param error_bars: Includes error bars. Using Clopper-Pearson interval based on beta distribution.
         :param equal_counts: If true, will attempt to build bins which contain the same number of events. Note that
-            splitting data with the exact same values into multiple bins is not supported. Also note, that this only
+            splitting data_container with the exact same values into multiple bins is not supported. Also note, that this only
             applies if type(bins) = int. See also self.__create_bins_from_data()
-        :param data_name: Name of the data which will be plotted. Requires the same identifier as defined in data_dict
+        :param data_name: Name of the data_container which will be plotted. Requires the same identifier as defined in data_dict
             upon class instantiation.
-        :param category: Which category will be selected from the data provided (e.g. "Electron"). If none is provided,
-            all data will be selected. If a list of categories is provided, multiple histograms in the same plot will
+        :param category: Which category will be selected from the data_container provided (e.g. "Electron"). If none is provided,
+            all data_container will be selected. If a list of categories is provided, multiple histograms in the same plot will
             be created.
         :param bins: Accepts an array-like object to specify bin cutoffs, an int for evenly spaced bins between
-            the min and max value of the data provided, or the string "auto", for 100 evenly spaced bins. Omitting will
+            the min and max value of the data_container provided, or the string "auto", for 100 evenly spaced bins. Omitting will
             default to auto.
         :param title: Title of the plot. If none is provided, the title will be generated based on the provided
             parameters.
@@ -1171,7 +1179,7 @@ class Evaluator:
             matplotlib.pyplot.scatter().
         :return: None. Shows plot.
         """
-        # create data
+        # create data_container
         if category is None:
             data = self.stats_data
             selected_data = self.select_stats_data_by_data_name(data_name, data=data)
@@ -1378,7 +1386,7 @@ class Evaluator:
                 data = self.select_stats_data_by_category(category)
                 data = self.select_stats_data_by_data_name("MRD", data=data)
         elif "MRD" in self.data_dict:
-            print("Currently this functions only supports loading MRD data from stats data.")
+            print("Currently this functions only supports loading MRD data_container from stats data_container.")
             return None
         else:
             return None
@@ -1397,7 +1405,7 @@ class Evaluator:
             category = "all categories"
         if title is None:
             plt.title(f"{self.model_name} - Histogram with {len(bins) - 1} bins. "
-                      f"\n Plotting MRD column {column} data for the category {category}.")
+                      f"\n Plotting MRD column {column} data_container for the category {category}.")
         else:
             plt.title(f"{title}")
 
@@ -1481,19 +1489,19 @@ class Bundle:
 
     def plot_histogram(self, *args, **kwargs) -> None:
         """
-        Plot a histogram (number of counts vs data).
+        Plot a histogram (number of counts vs data_container).
         """
         for evaluator in self.evals:
             evaluator.plot_histogram(*args, **kwargs)
 
     def plot_accuracy(self, *args, **kwargs) -> None:
         """
-        Plot model accuracy (accuracy vs data).
+        Plot model accuracy (accuracy vs data_container).
         ----------------------------------------------------------------------------------------------------------------
         Note:
         -----
         Data points beyond - if provided - xlim are automatically dropped; if no xlim has been provided, discounts all
-        data points beyond the first and last bin border.
+        data_container points beyond the first and last bin border.
         """
         for i in range(len(self.evals)):
             if i not in self.real_data_indices:

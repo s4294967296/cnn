@@ -5,7 +5,7 @@ import configparser
 import pickle
 import pathlib
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, KW_ONLY
 
 # 3rd party
 import numpy as np
@@ -17,8 +17,8 @@ import celfa_exceptions
 # CELFA - CNN Evaluation Library For ANNIE
 # ----------------------------------------
 
-# This file encapsulates utility functions to load and organize data.
-# In the first parts of the file, basic file operations are implemented, in the latter parts building the data
+# This file encapsulates utility functions to load and organize data_container.
+# In the first parts of the file, basic file operations are implemented, in the latter parts building the data_container
 # structures and export, as well as saving is implemented.
 ########################################################################################################################
 
@@ -56,10 +56,10 @@ def find_number_files(path: str, label: str, name: str, ending: str = "csv", gue
 
     :param beam_mrd_coinc: TODO see load_data
     :param path: Directory path (Include forward slash at the end)
-    :param label: Label of the data, e.g. 'electron_beamlike'
-    :param name: What data is read in, e.g. 'charge', 'neutron number'
+    :param label: Label of the data_container, e.g. 'electron_beamlike'
+    :param name: What data_container is read in, e.g. 'charge', 'neutron number'
     :param ending: File ending, e.g. 'csv' (without dot). Default = 'csv'
-    :param guess: Best guess of number of data files. If set to -1, attempt to find all files fitting the structure.
+    :param guess: Best guess of number of data_container files. If set to -1, attempt to find all files fitting the structure.
      Default = -1.
     :return: Returns how many files, specified by the parameters, have been found.
     """
@@ -99,10 +99,10 @@ def find_number_events(path: str, label: str, name: str, ending: str = "csv",
     of all files in the directory.
 
     :param path: Directory path (Include forward slash at the end)
-    :param label: Label of the data, e.g. 'electron_beamlike'
-    :param name: What data is read in, e.g. 'charge', 'neutron number'
+    :param label: Label of the data_container, e.g. 'electron_beamlike'
+    :param name: What data_container is read in, e.g. 'charge', 'neutron number'
     :param ending: File ending, e.g. 'csv' (without dot). Default = 'csv'
-    :param guess: Best guess of number of data files. If guess = -1, the function will attempt
+    :param guess: Best guess of number of data_container files. If guess = -1, the function will attempt
     to load all files following the structure above. Default = -1 (will try at most #guess files)
     :return: Returns how many events (that is: entries separated by the delimiter ',' inside the loaded files) have
     been found.
@@ -141,17 +141,17 @@ def concat_data_to_arr(arr: np.array, path: str, label: str, name: str, number_o
     """
     TODO: Check if this function is actually necessary..
 
-    Takes a np array and concatenates data to it, loaded from a specified number of files, according to the
+    Takes a np array and concatenates data_container to it, loaded from a specified number of files, according to the
     following pattern:
     ~/path/label_#####_name.ending, where '#####' is the corresponding file number.
 
     :param arr: np array to be concatenated to, will be returned
-    :param number_of_files: How many data files will be loaded; set to -1 if all files should be loaded. Default = -1
+    :param number_of_files: How many data_container files will be loaded; set to -1 if all files should be loaded. Default = -1
     :param path: Directory path (Include forward slash at the end)
-    :param label: Label of the data, e.g. 'electron_beamlike'
-    :param name: What data is read in, e.g. 'charge', 'neutron number'
+    :param label: Label of the data_container, e.g. 'electron_beamlike'
+    :param name: What data_container is read in, e.g. 'charge', 'neutron number'
     :param ending: File ending, e.g. 'csv' (without dot). Default = 'csv'
-    :return: Returns arr, concatenated with data
+    :return: Returns arr, concatenated with data_container
     """
 
     if number_of_files == -1:
@@ -187,18 +187,18 @@ def load_data(path: str,
               ) -> np.array:
     """
     Similar to concat_data_to_arr, the difference being that an array will be constructed.
-    Load data to a np array, loaded from a specified number of files, according to the
+    Load data_container to a np array, loaded from a specified number of files, according to the
     following pattern:
     ~/path/label_#####_name.ending, where '#####' is the corresponding file number.
 
     :param file_index_edges: Pass list or tuple of 2 ints to specify max and min file index for loading.
     :param beam_mrd_coinc: TODO
-    :param number_of_files: How many data files will be loaded; set to -1 if all files should be loaded. Default = -1
+    :param number_of_files: How many data_container files will be loaded; set to -1 if all files should be loaded. Default = -1
     :param path: Directory path (Include forward slash at the end)
-    :param label: Label of the data, e.g. 'electron_beamlike'
-    :param name: What data is read in, e.g. 'charge', 'neutron number'
+    :param label: Label of the data_container, e.g. 'electron_beamlike'
+    :param name: What data_container is read in, e.g. 'charge', 'neutron number'
     :param ending: File ending, e.g. 'csv' (without dot). Default = 'csv'
-    :return: Returns arr, concatenated with data
+    :return: Returns arr, concatenated with data_container
     """
     arr = []
     if number_of_files == -1:
@@ -264,19 +264,19 @@ def load_time_data(path: str, label: str, number_of_files: int = -1, ending="csv
     """
     TODO: add file index edges (see load_data)
     Similar to concat_time_data, the difference being that an array will be constructed.
-    Special util function to load in time data files, specified by the pattern
+    Special util function to load in time data_container files, specified by the pattern
     ~/path/label_#####_name.ending, where '#####' is the corresponding file number. The optional parameter
     'number_of_files' specifies how many files should be loaded, leave empty for all possible files in the directory.
-    Invert order of high time values <-> low time values, by inverting the interval [0,1] to [1,0] (range of data).
-    Also check for sum of elements of charge data of an event to be 0, if so, append empty arr.
+    Invert order of high time values <-> low time values, by inverting the interval [0,1] to [1,0] (range of data_container).
+    Also check for sum of elements of charge data_container of an event to be 0, if so, append empty arr.
 
-    Take in an array, to which the loaded time data will be appended. Compare "concat_data_to_arr".
+    Take in an array, to which the loaded time data_container will be appended. Compare "concat_data_to_arr".
 
     :param ending: File ending. Default = "csv"
     :param path: Directory path (Include forward slash at the end)
-    :param label: Label of the data, e.g. 'electron_beamlike'
-    :param number_of_files: How many data files will be loaded; set to -1 if all files should be loaded. Default = -1
-    :return: time_val, with loaded time data appended to it. (time)
+    :param label: Label of the data_container, e.g. 'electron_beamlike'
+    :param number_of_files: How many data_container files will be loaded; set to -1 if all files should be loaded. Default = -1
+    :return: time_val, with loaded time data_container appended to it. (time)
     """
     arr = np.zeros((0, 160))
 
@@ -286,7 +286,7 @@ def load_time_data(path: str, label: str, number_of_files: int = -1, ending="csv
     i = 0
     while number_of_files > 1:
         # 'mismatch_flag' monitors which of the 2 files (time, charge) could not be loaded - if only one
-        # of the files could not be loaded (mismatch in data files), it will raise a critical error.
+        # of the files could not be loaded (mismatch in data_container files), it will raise a critical error.
         mismatch_flag = 0
         i += 1
         try:
@@ -304,7 +304,7 @@ def load_time_data(path: str, label: str, number_of_files: int = -1, ending="csv
             continue
 
         if mismatch_flag > 1:
-            data_logger.critical(f"Call to concat_time_data ({path}{label}_{i}): data mismatch error!")
+            data_logger.critical(f"Call to concat_time_data ({path}{label}_{i}): data_container mismatch error!")
             raise celfa_exceptions.ErrorMismatch
 
         loaded_from_csv = []
@@ -317,7 +317,7 @@ def load_time_data(path: str, label: str, number_of_files: int = -1, ending="csv
                 loaded_from_csv.append(temp_flip)
 
         loaded_from_csv = np.array(loaded_from_csv)
-        # TODO: check if np.array is a better solution for ragged data shapes
+        # TODO: check if np.array is a better solution for ragged data_container shapes
         arr = [*arr, *loaded_from_csv]
         number_of_files -= 1
 
@@ -327,19 +327,19 @@ def load_time_data(path: str, label: str, number_of_files: int = -1, ending="csv
 
 def concat_time_data(arr: np.array, path: str, label: str, number_of_files: int = -1) -> np.array:
     """
-    Special util function to load in time data files, specified by the pattern
+    Special util function to load in time data_container files, specified by the pattern
     ~/path/label_#####_name.ending, where '#####' is the corresponding file number. The optional parameter
     'number_of_files' specifies how many files should be loaded, leave empty for all possible files in the directory.
-    Invert order of high time values <-> low time values, by inverting the interval [0,1] to [1,0] (range of data).
-    Also check for sum of elements of charge data of an event to be 0, if so, append empty arr.
+    Invert order of high time values <-> low time values, by inverting the interval [0,1] to [1,0] (range of data_container).
+    Also check for sum of elements of charge data_container of an event to be 0, if so, append empty arr.
 
-    Will take in an array, to which the loaded time data will be appended. Compare "concat_data_to_arr".
+    Will take in an array, to which the loaded time data_container will be appended. Compare "concat_data_to_arr".
 
     :param path: Directory path (Include forward slash at the end)
-    :param label: Label of the data, e.g. 'electron_beamlike'
-    :param arr: np array to which the time data will be concatenated.
-    :param number_of_files: How many data files will be loaded; set to -1 if all files should be loaded. Default = -1
-    :return: time_val, with loaded time data appended to it. (time)
+    :param label: Label of the data_container, e.g. 'electron_beamlike'
+    :param arr: np array to which the time data_container will be concatenated.
+    :param number_of_files: How many data_container files will be loaded; set to -1 if all files should be loaded. Default = -1
+    :return: time_val, with loaded time data_container appended to it. (time)
     """
     if number_of_files == -1:
         number_of_files = find_number_files(path, label, "charge")
@@ -347,7 +347,7 @@ def concat_time_data(arr: np.array, path: str, label: str, number_of_files: int 
     i = 0
     while number_of_files > 1:
         # 'mismatch_flag' monitors which of the 2 files (time, charge) could not be loaded - if only one
-        # of the files could not be loaded (mismatch in data files), it will raise a critical error.
+        # of the files could not be loaded (mismatch in data_container files), it will raise a critical error.
         mismatch_flag = 0
         i += 1
         try:
@@ -364,7 +364,7 @@ def concat_time_data(arr: np.array, path: str, label: str, number_of_files: int 
             continue
 
         if mismatch_flag > 1:
-            data_logger.critical(f"Call to concat_time_data ({path}{label}_{str(i)}): data mismatch error!")
+            data_logger.critical(f"Call to concat_time_data ({path}{label}_{str(i)}): data_container mismatch error!")
             raise celfa_exceptions.ErrorMismatch
 
         loaded_from_csv = []
@@ -386,14 +386,14 @@ def concat_time_data(arr: np.array, path: str, label: str, number_of_files: int 
 
 def zip_data(data_sets: list) -> list:
     """
-    Zip multiple data sets at once, return the zipped data sets.
+    Zip multiple data_container sets at once, return the zipped data_container sets.
 
     Note: This is a free, single standing function since it relies on the behaviour of zip(). Specifically, the property
     that only as many elements as the length of the shortest list will be zipped together, is used. This allows for
     easy test-implementation, and using the code in an older version of python, or if the behaviour of zip() is changed,
     it is easier to debug, since only this singular function will break.
 
-    :param data_sets: List of data (in the form of arrays)
+    :param data_sets: List of data_container (in the form of arrays)
     :return: np.array of zipped data_sets
     """
     return list(zip(*data_sets))
@@ -403,25 +403,25 @@ def construct_data_array(data_names, path: str, label: str, number_of_files: int
                          ending: str = "csv", load_from_config=False,
                          file_index_edges: List[int] = None, beam_mrd_coinc: bool = False) -> np.array:
     """
-    Return zipped data sets in the order specified by data_names. Use "time" to load time, using the special
-    load_time_data function. The order in which the data sets will be zipped is the order of the entries in data_names.
+    Return zipped data_container sets in the order specified by data_names. Use "time" to load time, using the special
+    load_time_data function. The order in which the data_container sets will be zipped is the order of the entries in data_names.
 
     The file path is given by ~/path/label_#####_name.ending, where '#####' is the corresponding file number.
 
-    Note: Also automatically appends the appropriate data identifier (1, 0) for electron, (0, 1) for muon.
+    Note: Also automatically appends the appropriate data_container identifier (1, 0) for electron, (0, 1) for muon.
     :param file_index_edges: Pass list or tuple of 2 ints to specify max and min file index for loading.
     :param beam_mrd_coinc: TODO
     :param ending: File ending, e.g. 'csv' (without dot). Default = 'csv'
     :param data_names: List of file names which will be loaded, e.g. 'charge', 'neutron_number', 'time'.
     :param path: Directory path (Include slash at the end)
-    :param label: Label of the data, e.g. 'electron_beamlike'
-    :param number_of_files: How many data files will be loaded; set to -1 if all files should be loaded. Default = -1
+    :param label: Label of the data_container, e.g. 'electron_beamlike'
+    :param number_of_files: How many data_container files will be loaded; set to -1 if all files should be loaded. Default = -1
     :param load_from_config: TODO: specify from which config file will be loaded, and support loading from config file
     this should essentially replace data_names. This will allow for having multiple configs ready, and training
-    a plethora of models in one go with different data configs.
+    a plethora of models in one go with different data_container configs.
     Default = False.
-    :return: After loading, return all data sets zipped together, using zip(). Length of the data sets will be cut to
-    that of the shortest data set.
+    :return: After loading, return all data_container sets zipped together, using zip(). Length of the data_container sets will be cut to
+    that of the shortest data_container set.
     """
     loaded_data = []
     for name in data_names:
@@ -434,7 +434,7 @@ def construct_data_array(data_names, path: str, label: str, number_of_files: int
         # Should be unnecessary since zip_data() ensures that each list is the same length, but gives peace of mind
         length = len(loaded_data[0])
         if not all(len(d) == length for d in loaded_data):
-            data_logger.critical("Call to construct_data_array: Mismatch in data length!")
+            data_logger.critical("Call to construct_data_array: Mismatch in data_container length!")
             raise celfa_exceptions.ErrorMismatch
 
     data_logger.info(f"Call to construct_data_array ({path}{label}): executed successfully")
@@ -464,7 +464,7 @@ def concat_min_array(*darrs: list) -> list:
 def build_category_values(categories: list, num: int) -> list:
     """
     Return a list of category values specified in categories. Appends in order given when calling the function. num
-    specifies how many data points are in each category. Assumes every category is the same length!
+    specifies how many data_container points are in each category. Assumes every category is the same length!
 
     :param categories: Specifier for category values; e.g. (1, 0) for electron, (0, 1) for muon -> [(1,0), (0,1)].
     :param num: How many identifiers for each category.
@@ -485,7 +485,7 @@ def load_column(path: str, filename: str, col: int, delimiter: str = ",", fill_e
     data = []
     with open(f"{path}{filename}", "r") as f:
         for line in f:
-            # to avoid empty values in data
+            # to avoid empty values in data_container
             if not (line.split(delimiter))[col] or (line.split(delimiter))[col] == "\n" and fill_empty:
                 val = float(fill_value)
             else:
@@ -495,7 +495,7 @@ def load_column(path: str, filename: str, col: int, delimiter: str = ",", fill_e
 
 
 def save_data(path: str, filename: str, data: object, ending: str = "pickle"):
-    """Dump data into file using pickle."""
+    """Dump data_container into file using pickle."""
     try:
         pickle_out = open(f"{path}{filename}.{ending}", "wb")
     except OSError:
@@ -507,8 +507,8 @@ def save_data(path: str, filename: str, data: object, ending: str = "pickle"):
 
 def load_and_create_train_val_test_sets(data, category_values, percentages=None):
     """
-    Shuffle and create train, validation and test data sets. The relative size can be defined by using the 'percentages'
-    parameter. The returned arrays will be of the form (data, category_values) where data is of the form
+    Shuffle and create train, validation and test data_container sets. The relative size can be defined by using the 'percentages'
+    parameter. The returned arrays will be of the form (data_container, category_values) where data_container is of the form
     (data1, data2, data3) etc.
     """
     if percentages is None:
@@ -546,7 +546,7 @@ def select_data(data, indices):
 
 
 def reshape_data_entry(data, index, shape):
-    """Select a data type from data and reshape using np.reshape()"""
+    """Select a data_container type from data_container and reshape using np.reshape()"""
     selected_data = np.array(select_data(data, [index])).reshape(shape)
     new_shaped_data = []
 
@@ -572,7 +572,7 @@ def reshape_data_entry(data, index, shape):
     return new_shaped_data
 
 
-# data set stuff
+# data_container set stuff
 def dataset_stats(data_names: List[str],
                   path: str = None,
                   label: str = None,
@@ -688,18 +688,22 @@ def dataset_stats(data_names: List[str],
 
 @dataclass
 class ExperimentalData:
-    """Wrapper for loaded experimental data.
+    """Wrapper for loaded experimental data_container.
 
-    data is a list of lists, which contain the different data types.
-    data_dict is of the form {"charge": 1, "MRD": 2}, and contains information about retrieval of data.
-    stats_data_indices uses the same mapping defined in data_dict, and indicates which of the data is loaded only for
-        statistical purposes (the model has not been trained which this data), e.g. "VisibleEnergy", "Rings"
-    net_data_indices: see stats_data_indices. The difference being, that these indices define the data with which the
+    data_container is a list of lists, which contain the different data_container types.
+    data_dict is of the form {"charge": 1, "MRD": 2}, and contains information about retrieval of data_container.
+    stats_data_indices uses the same mapping defined in data_dict, and indicates which of the data_container is loaded only for
+        statistical purposes (the model has not been trained which this data_container), e.g. "VisibleEnergy", "Rings"
+    net_data_indices: see stats_data_indices. The difference being, that these indices define the data_container with which the
         model has been trained. E.g. "charge" and "MRD"
-    input_layers: dictionary which describes the model's input layers. This describes which data is loaded; data also
-        needs to have same name as described in data_dict. Compare evaluating a functional model:
+    input_layers: dictionary which describes the model's input layers. The keys are the name of data_container / input layer,
+        the values correspond to the input shapes.
+        This describes which data_container is loaded; data_container also needs to have same name as described in data_dict.
+         Compare evaluating a functional model:
             fun.evaluate({"mrd": data_mrd, "charge": data_charge}, y)
-        The input layers of the model also need to carry the same name / identifier.
+        The input layers of the model also need to carry the same name / identifier as the keys.
+        Example:
+            input_layers = {"MRD": (-1, 1, 6), "charge": (-1, 10, 16, 1)}
     """
     net_data_indices: List[int]
     stats_data_indices: List[int]
@@ -710,9 +714,9 @@ class ExperimentalData:
 
 @dataclass
 class SimulationData(ExperimentalData):
-    """Wrapper for loaded simulation data, inherits from ExperimentalData
+    """Wrapper for loaded simulation data_container, inherits from ExperimentalData
 
-    category_values is just a list of category values corresponding to the loaded data.
+    category_values is just a list of category values corresponding to the loaded data_container.
     """
     category_values: List
     cat_values_dict: dict
